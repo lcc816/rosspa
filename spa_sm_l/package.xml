@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>spa_sm_l</name>
+  <version>0.0.0</version>
+  <description>The spa_sm_l package</description>
+
+  <maintainer email="lichangchun816@163.com">Changchun Lee</maintainer>
+
+  <license>BSD</license>
+
+
+  <!-- Url tags are optional, but multiple are allowed, one per tag -->
+  <!-- Optional attribute type can be: website, bugtracker, or repository -->
+  <!-- Example: -->
+  <!-- <url type="website">http://wiki.ros.org/spa_sm_l</url> -->
+
+  <author email="lichangchun816@163.com">Changchun Lee</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>roscpy</build_depend>
+  <build_depend>std_srvs</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>spa_core</build_depend>
+
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>spa_core</exec_depend>
+
+</package>

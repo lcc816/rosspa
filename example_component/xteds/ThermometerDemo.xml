@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<xTEDS version="1.1" name="ThermometerDemo" description="Text">
+  <Device modelId="100" name="DemoThermomter" kind="Demo" id="123" />
+  <Interface> 
+    <Notification> 
+      <DataMsg name="Temperature_Reading" id="1" magRate="1" msgArrival="PERIODIC"> 
+        <Variable name="SubS" kind="subSeconds" dataType="UINT32" units="counts" scaleUnits="seconds" scaleFactor="0.0001" /> 
+        <Variable name="Time" kind="time" dataType="UINT32" units="s" /> 
+        <Variable name="Temperature" id="1" kind="temperature" dataType="INT16" /> 
+      </DataMsg> 
+    </Notification> 
+    <Command> 
+      <CommandMsg name="SetLEDs" id="10" description="Set LED's To Bits 0,1,2"> 
+        <Variable name="LED" kind="status" dataType="UINT08" /> 
+      </CommandMsg> 
+    </Command> 
+  </Interface> 
+</xTEDS>

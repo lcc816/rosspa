@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>example_component</name>
+  <version>0.1.0</version>
+  <description>An example component</description>
+
+  <maintainer email="lichangchun816@163.com">Changchun Lee</maintainer>
+
+  <license>BSD</license>
+
+  <author >Changchun Lee</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>spa_core</build_depend>
+
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>spa_core</exec_depend>
+
+</package>

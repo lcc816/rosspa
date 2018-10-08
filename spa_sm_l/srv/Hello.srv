@@ -1,0 +1,5 @@
+string nodeName
+uint64 cuuid
+uint8  componentType
+---
+uint8  status

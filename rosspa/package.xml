@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>rosspa</name>
+  <version>0.0.0</version>
+  <description>
+    An implementation of Space Plug-and-play Architecture based ROS.
+  </description>
+
+  <maintainer email="lichangchun816@163.com">Changchun Lee</maintainer>
+  <author>Changchun Lee</author>
+  <license>BSD</license>  
+
+  <url type="repository">https://github.com/lcc816/rosspa.git</url>
+  <!-- url type="bugtracker">https://github.com/lcc816/rosspa/issues</url -->
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>spa_core</exec_depend>
+  <exec_depend>spa_ls</exec_depend>
+  <exec_depend>spa_sm_l</exec_depend>
+  <exec_depend>spa_sm_u</exec_depend>
+  <exec_depend>spa_msgs</exec_depend>
+
+  <export>
+      <metapackage/>
+  </export>
+</package>
