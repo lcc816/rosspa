@@ -11,6 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
     actionlib_msgs
 )
 
+find_package(Boost REQUIRED COMPONENT system)
+
 add_action_files(
     DIRECTORY action
     FILES SpaProbe.action
@@ -21,9 +23,10 @@ catkin_package(
     INCLUDE_DIRS include
     LIBRARIES spa_core
     CATKIN_DEPENDS std_msgs actionlib actionlib_msgs roscpp
+    DEPENDS Boost
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 add_library(spa_core src/spa_application.cpp)
 add_dependencies(spa_core ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

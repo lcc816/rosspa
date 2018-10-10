@@ -10,6 +10,10 @@ SpaApplication::SpaApplication(uint64_t id, uint8_t type, std::string &uri) :
   xtedsUri(uri),
   operatingMode(SPA_OPMODE_INITIALIZING)
 {
+}
+
+void SpaApplication::init()
+{
   nodeName = ros::this_node::getName(); // set node name
   setXuuid();
 
@@ -17,12 +21,30 @@ SpaApplication::SpaApplication(uint64_t id, uint8_t type, std::string &uri) :
   beatServer = std::ref(BeatActionServer(nh, nodeName + "/beat_action", \
                boost::bind(&SpaApplication::beatCallback, this, _1), false));
   xtedsServer = nh.serviceServer<std_srvs::Trigger>(nodeName + "/xteds", SpaApplication::xtedsRegisterCallback);
-}
 
-void SpaApplication::run()
-{
   operatingMode = SPA_OPMODE_FULLY_OPERATIONAL;
   beatServer.start();
+
+  spa_sm_l::Hello hello;
+  hello.request.cuuid = cuuid;
+  hello.request.componentType = componentType;
+
+  ros::Rate rate(10);
+  while (ros::ok())   // Waiting to be discovered by the SM-L
+  {
+    if (regClient.call(hello))
+    {
+      ROS_INFO("%s: registered!", nodeName.c_str());
+      break;
+    }
+    else {
+      ROS_INFO("%s: failed to register, retry!", nodeName.c_str());
+      rate.sleep();
+    }
+  }
+
+  // All is fine, to user's task.
+  appInit();
 }
 
 void SpaApplication::shutdown()
@@ -41,23 +63,18 @@ uint64_t SpaApplication::getXuuid()
 
 void SpaApplication::registerRequest()
 {
-  spa_sm_l::Hello hello;
-  hello.request.cuuid = cuuid;
-  hello.request.componentType = componentType;
 
-  ros::Rate rate(10);
-  while (ros::ok())
-  {
-    if (regClient.call(hello))
-    {
-      ROS_INFO("%s: registered!", nodeName.c_str());
-      break;
-    }
-    else {
-      ROS_INFO("%s: failed to register, retry!", nodeName.c_str());
-      rate.sleep();
-    }
-  }
+}
+
+void SpaApplication::registerCommand()
+{
+
+}
+
+
+void SpaApplication::registerNotification()
+{
+
 }
 
 void SpaApplication::issueQuery()

@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-#include <spa_sm_l/Hello.h>
+#include <spa_core/spa_application.h>
 
 int main(int argc, char **argv)
 {
