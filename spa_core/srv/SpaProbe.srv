@@ -1,0 +1,10 @@
+uint16  dialogId    # Dialog identifier set by the requester.
+int16   replyCount  # Number of SPAProbeReply messages.
+int16   replyPeriod # Period between SPAProbeReply messages.
+---
+uint16  dialogId    # Dialog identifier set by the requester.
+uint32  uptime      # Senconds since power on.
+uint64  cuuid       # Universally Unique Id of the SPA component.
+uint64  xuuid       # Universally Unique Id of the xTEDS.
+uint32  faultIndicator  # Indicates presense of fault.
+uint8   operatingMode # Enumeration of operating mode.

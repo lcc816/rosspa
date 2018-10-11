@@ -17,34 +17,35 @@ void SpaApplication::init()
   nodeName = ros::this_node::getName(); // set node name
   setXuuid();
 
-  regClient = nh.serviceClient<spa_sm_l::Hello>("local/hello");
-  beatServer = std::ref(BeatActionServer(nh, nodeName + "/beat_action", \
-               boost::bind(&SpaApplication::beatCallback, this, _1), false));
-  xtedsServer = nh.serviceServer<std_srvs::Trigger>(nodeName + "/xteds", SpaApplication::xtedsRegisterCallback);
-
-  operatingMode = SPA_OPMODE_FULLY_OPERATIONAL;
-  beatServer.start();
+  discoveryClient = nh.serviceClient<spa_sm_l::Hello>("local/hello");
+  beatServer = nh.advertiseService(nodeName + "/heartbeat", &SpaApplication::beatCallback, this);
+  probeServer = std::ref(ProbeActionServer(nh, nodeName + "/spa_probe", \
+               boost::bind(&SpaApplication::probeCallback, this, _1), false));
+  probeServer.start();
+  xtedsServer = nh.advertiseService(nodeName + "/xteds", &SpaApplication::xtedsRegisterCallback, this);
 
   spa_sm_l::Hello hello;
+  hello.request.nodeName = nodeName;
   hello.request.cuuid = cuuid;
   hello.request.componentType = componentType;
 
-  ros::Rate rate(10);
+  ros::Rate rate(2);
   while (ros::ok())   // Waiting to be discovered by the SM-L
   {
-    if (regClient.call(hello))
+    if (discoveryClient.call(hello))
     {
-      ROS_INFO("%s: registered!", nodeName.c_str());
+      ROS_INFO("%s: discovered!", nodeName.c_str());
       break;
     }
     else {
-      ROS_INFO("%s: failed to register, retry!", nodeName.c_str());
+      ROS_INFO("%s: failed to be discovered, retry!", nodeName.c_str());
       rate.sleep();
     }
   }
 
-  // All is fine, to user's task.
+  // All is fine, call user's initial functions.
   appInit();
+  operatingMode = SPA_OPMODE_FULLY_OPERATIONAL;
 }
 
 void SpaApplication::shutdown()
@@ -54,6 +55,11 @@ void SpaApplication::shutdown()
 void SpaApplication::setXuuid()
 {
   xuuid = 0xFFFFFFFF;
+}
+
+uint32_t SpaApplication::getUptime()
+{
+  return 0;
 }
 
 uint64_t SpaApplication::getXuuid()
@@ -100,27 +106,52 @@ bool SpaApplication::xtedsRegisterCallback(std_srvs::Trigger::Request &req, std_
   return true;
 }
 
-void SpaApplication::beatCallback(const spa_core::SpaPorbeGoalConstPtr &goal)
+void SpaApplication::probeCallback(const spa_core::SpaPorbeGoalConstPtr &goal)
 {
-  ros::Rate rate(goal->replyPeriod);
+  ros::Rate rate(1 / (goal->replyPeriod));
   spa_core::SpaProbeFeedback feedback;
   spa_core::SpaProbeResult result;
 
-  feedback.dialogId = 0;
+  feedback.dialogId = goal->dialogId;
   feedback.cuuid = cuuid;
   feedback.xuuid = xuuid;
 
-  while (ros::ok())
+  int16_t count = goal->replyCount;
+  if (count)
   {
-    feedback.uptime = 0;
-    feedback.faultIndicator = 0;
-    feedback.operatingMode = operatingMode;
-    beatServer.publishFeedback(feedback);
-    rate.sleep();
+    while (ros::ok())
+    {
+      feedback.uptime = getUptime();
+      feedback.faultIndicator = 0;
+      feedback.operatingMode = operatingMode;
+      probeServer.publishFeedback(feedback);
+      rate.sleep();
+    }
+  }
+  else
+  {
+    while (ros::ok() && count--)
+    {
+      feedback.uptime = 0;
+      feedback.faultIndicator = 0;
+      feedback.operatingMode = operatingMode;
+      beatServer.publishFeedback(feedback);
+      rate.sleep();
+    }
   }
 
   result.resultMode = operatingMode;
   beatServer.setSucceeded(result);
+}
+
+void beatCallback(spa_core::SpaProbe::Request &req, spa_core::SpaProbe::Response &res)
+{
+  res.dialogId = req.dialogId;
+  res.uptime = getUptime();
+  res.cuuid = cuuid;
+  res.xuuid = xuuid;
+  res.faultIndicator = 0;
+  res.operatingMode = operatingMode;
 }
 
 }
