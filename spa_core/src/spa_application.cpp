@@ -29,7 +29,7 @@ void SpaApplication::init()
   hello.request.cuuid = cuuid;
   hello.request.componentType = componentType;
 
-  ros::Rate rate(2);
+  ros::Rate rate(1);
   while (ros::ok())   // Waiting to be discovered by the SM-L
   {
     if (discoveryClient.call(hello))

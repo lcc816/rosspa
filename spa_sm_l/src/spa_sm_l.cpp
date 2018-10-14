@@ -3,7 +3,7 @@
 #include <spa_core/spa_common.h>
 #include <actionlib/client/simple_action_client.h>
 #include <spa_core/SpaProbeAction.h> // for heartbeat of components
-#
+#include <mutex>
 #include <list>
 #include <memory>
 
@@ -21,6 +21,7 @@ private:
   ros::NodeHandle nh;
   ros::ServiceServer discoverServer;
   ros::ServiceClient probeClient;
+  std::mutex comListMutex;
   std::list<ComponentInfo> components;
 };
 
@@ -35,18 +36,11 @@ bool SpaLocalManager::discoverCallback(spa_sm_l::Hello::Request& req, spa_sm_l::
   res.status = 1;
 
   ComponentInfo com(req.nodeName, req.cuuid, req.componentType);
+  comListMutex.lock();
   components.push_back(com);
+  comListMutex.unlock();
 
-  actionlib::SimpleActionClient<spa_core::SpaProbeAction> ac(nodeName + "/beat_action", true);
-  ac.waitForServer();
   ROS_INFO("discovered: cuuid = %ld, type = %ld", (long int)req.cuuid, (long int)req.componentType);
-
-  spa_core::SpaProbeGoal goal;
-  goal.dialogId = 0;
-  goal.replyCount = 0;
-  goal.replyPeriod = 5;
-  ac.sendGoal(goal);
-
   ROS_INFO("sending back acknowledge message");
   return true;
 }

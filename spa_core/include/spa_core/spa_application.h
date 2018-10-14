@@ -15,11 +15,11 @@ class SpaApplication
 {
 public:
   SpaApplication(uint64_t id, uint8_t type, std::string &uri);
-  void run() = 0;
+  virtual void run() = 0;
   void init();
-  void appInit() = 0;
+  virtual void appInit() = 0;
   void shutdown();
-  void appShutdown() = 0;
+  virtual void appShutdown() = 0;
   void setXuuid();
   uint64_t getXuuid();
   uint32_t getUptime();
