@@ -1,6 +1,6 @@
 #include <ros/ros.h>
-#include "spa/xteds_parser.h"
-#include "spa/xteds_repository.h"
+#include <spa_core/xteds_parser.h>
+#include <spa_core/xteds_repository.h>
 #include <string>
 
 namespace spa
@@ -21,10 +21,10 @@ public:
 
 private:
     /// Callback function for SM-x request to Lookup Service to perform component probe.
-	bool probeCallback(spa_ls::SpaLookupServiceProbe::Request &req, spa_ls::SpaLookupServiceProbe::Response &res);
+  bool probeCallback(spa_core::SpaLookupServiceProbe::Request &req, spa_core::SpaLookupServiceProbe::Response &res);
 
 	/// Callback function for component request to Lookup Service
-	bool queryCallback(spa_ls::SpaQuery::Request &req, spa_ls::SpaQuery::Response &res);
+  bool queryCallback(spa_core::SpaQuery::Request &req, spa_core::SpaQuery::Response &res);
 
 	///< relate to ROS
 	ros::NodeHandle nh;
@@ -56,7 +56,7 @@ std_srvs::Trigger spaXtedsRequest(const std::string &nodeName)
 	return srv;
 }
 
-bool LookupService::probeCallback(spa_ls::SpaLookupServiceProbe::Request &req, spa_ls::SpaLookupServiceProbe::Response &res)
+bool LookupService::probeCallback(spa_core::SpaLookupServiceProbe::Request &req, spa_core::SpaLookupServiceProbe::Response &res)
 {
 	// Probe the SPA component use node name.
   	spa_core::SpaProbe srv1 = spaProbeRequest(req.nodeName);
@@ -77,7 +77,7 @@ bool LookupService::probeCallback(spa_ls::SpaLookupServiceProbe::Request &req, s
 	return true;
 }
 
-bool LookupService::queryCallback(spa_ls::SpaQuery::Request &req, spa_ls::SpaQuery::Response &res)
+bool LookupService::queryCallback(spa_core::SpaQuery::Request &req, spa_core::SpaQuery::Response &res)
 {
 }
 
@@ -86,7 +86,6 @@ bool LookupService::queryCallback(spa_ls::SpaQuery::Request &req, spa_ls::SpaQue
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "spa_ls");
-  ros::NodeHandle nh;
 
   spa::LookupService spa_ls;
 

@@ -5,7 +5,7 @@ project(example_component)
 # add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS roscpp spa_sm_l)
+find_package(catkin REQUIRED COMPONENTS spa_core)
 
 ###################################
 ## catkin specific configuration ##

@@ -11,11 +11,20 @@ find_package(catkin REQUIRED COMPONENTS
     actionlib_msgs
 )
 
-find_package(Boost REQUIRED COMPONENT system)
+find_package(Boost REQUIRED COMPONENTS system)
 
 add_action_files(
     DIRECTORY action
     FILES SpaProbe.action
+)
+
+add_service_files(
+    DIRECTORY srv
+    FILES
+    Hello.srv
+    SpaProbe.srv
+    SpaLookupServiceProbe.srv
+    SpaQuery.srv
 )
 generate_messages(DEPENDENCIES actionlib_msgs std_msgs)
 

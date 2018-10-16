@@ -1,14 +1,15 @@
-#include <spa/spa_application.h>
+#include <spa_core/spa_application.h>
 #include <functional>
 
 namespace spa
 {
 
-SpaApplication::SpaApplication(uint64_t id, uint8_t type, std::string &uri) :
+SpaApplication::SpaApplication(uint64_t id, ComponentType type, const std::string &uri) :
   cuuid(id),
   componentType(type),
   xtedsUri(uri),
-  operatingMode(SPA_OPMODE_INITIALIZING)
+  operatingMode(SPA_OPMODE_INITIALIZING),
+  probeServer(nh, nodeName + "/spa_probe", boost::bind(&SpaApplication::probeCallback, this, _1), false)
 {
 }
 
@@ -17,14 +18,13 @@ void SpaApplication::init()
   nodeName = ros::this_node::getName(); // set node name
   setXuuid();
 
-  discoveryClient = nh.serviceClient<spa_sm_l::Hello>("local/hello");
+  discoveryClient = nh.serviceClient<spa_core::Hello>("local/hello");
   beatServer = nh.advertiseService(nodeName + "/heartbeat", &SpaApplication::beatCallback, this);
-  probeServer = std::ref(ProbeActionServer(nh, nodeName + "/spa_probe", \
-               boost::bind(&SpaApplication::probeCallback, this, _1), false));
+  // probeServer = ProbeActionServer(nh, nodeName + "/spa_probe", boost::bind(&SpaApplication::probeCallback, this, _1), false);
   probeServer.start();
   xtedsServer = nh.advertiseService(nodeName + "/xteds", &SpaApplication::xtedsRegisterCallback, this);
 
-  spa_sm_l::Hello hello;
+  spa_core::Hello hello;
   hello.request.nodeName = nodeName;
   hello.request.cuuid = cuuid;
   hello.request.componentType = componentType;
@@ -106,7 +106,7 @@ bool SpaApplication::xtedsRegisterCallback(std_srvs::Trigger::Request &req, std_
   return true;
 }
 
-void SpaApplication::probeCallback(const spa_core::SpaPorbeGoalConstPtr &goal)
+void SpaApplication::probeCallback(const spa_core::SpaProbeGoalConstPtr &goal)
 {
   ros::Rate rate(1 / (goal->replyPeriod));
   spa_core::SpaProbeFeedback feedback;
@@ -135,16 +135,16 @@ void SpaApplication::probeCallback(const spa_core::SpaPorbeGoalConstPtr &goal)
       feedback.uptime = 0;
       feedback.faultIndicator = 0;
       feedback.operatingMode = operatingMode;
-      beatServer.publishFeedback(feedback);
+      probeServer.publishFeedback(feedback);
       rate.sleep();
     }
   }
 
   result.resultMode = operatingMode;
-  beatServer.setSucceeded(result);
+  probeServer.setSucceeded(result);
 }
 
-void beatCallback(spa_core::SpaProbe::Request &req, spa_core::SpaProbe::Response &res)
+bool SpaApplication::beatCallback(spa_core::SpaProbe::Request &req, spa_core::SpaProbe::Response &res)
 {
   res.dialogId = req.dialogId;
   res.uptime = getUptime();

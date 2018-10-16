@@ -2,8 +2,8 @@
 #define XTEDS_PARSER_H
 
 #include <string>
-#include "spa/xteds_repository.h"
-#include "rapidxml/rapidxml.h"
+#include <spa_core/xteds_repository.h>
+#include <rapidxml/rapidxml.h>
 
 namespace spa
 {

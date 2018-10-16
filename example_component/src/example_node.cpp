@@ -7,8 +7,8 @@ namespace spa
 class MyApplication : public SpaApplication
 {
 public:
-  MyApllication(uint64_t id, uint8_t type, std::string &uri) :
-    SpaApplicatin(id, type, uri)
+  MyApplication(uint64_t id, ComponentType type, const std::string &uri) :
+    SpaApplication(id, type, uri)
   {}
   void run();
   void appInit();
@@ -19,6 +19,13 @@ void MyApplication::run()
 {
   //setXuuid();
   init();
+
+  ros::Rate rate(0.2);
+  while (ros::ok())
+  {
+    ROS_INFO("I'm running!");
+    rate.sleep();
+  }
 }
 
 void MyApplication::appInit()
@@ -39,6 +46,6 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "example_node");
 
-  spa::MyApplication myApp(123456, spa::PA_CMPTYPE_UNKNOWN, "../xteds/Thermometer_Demo.xml");
+  spa::MyApplication myApp(123456, spa::SPA_CMPTYPE_UNKNOWN, "../xteds/Thermometer_Demo.xml");
   myApp.run();
 }

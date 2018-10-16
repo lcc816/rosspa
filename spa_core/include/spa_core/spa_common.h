@@ -36,19 +36,19 @@ enum OperatingMode
   SPA_OPMODE_USER_DEFINED_ANOMALY = 41
 };
 
-struct CompomnentInfo
+struct ComponentInfo
 {
-  CompomnentInfo(std::string name, uint64_t uuid, ComponentType type) :
-    nodeName(name),
+  ComponentInfo(uint64_t uuid, ComponentType type) :
     cuuid(uuid),
-    componentType(type)
+    componentType(type),
+    operatingMode(SPA_OPMODE_INITIALIZING)
   {}
 
-  CompomnentInfo() {}
+  ComponentInfo() {}
 
-  std::string nodeName;
   uint64_t cuuid;
   ComponentType componentType;
+  OperatingMode operatingMode;
 };
 
 }
