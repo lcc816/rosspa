@@ -23,8 +23,9 @@ add_service_files(
     FILES
     Hello.srv
     SpaProbe.srv
-    SpaLookupServiceProbe.srv
+    SpaRequestLsProbe.srv
     SpaQuery.srv
+    SpaXteds.srv
 )
 generate_messages(DEPENDENCIES actionlib_msgs std_msgs)
 

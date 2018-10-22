@@ -1,7 +1,13 @@
 #include <ros/ros.h>
-#include <spa_core/xteds_parser.h>
-#include <spa_core/xteds_repository.h>
+#include <spa_core/spa_common.h>
+#include <spa_core/SpaRequestLsProbe.h>
+#include <spa_core/SpaProbe.h>
+#include <spa_core/SpaXteds.h>
+#include <spa_core/SpaQuery.h>
+//#include <spa_core/xteds_parser.h>
+//#include <spa_core/xteds_repository.h>
 #include <string>
+#include <fstream>
 
 namespace spa
 {
@@ -13,75 +19,89 @@ public:
 	/// Finding if the component's xTEDS already exists in the repository.
 	bool existXteds(uint64_t xuuid);
 
-	/// Probe the SPA component use node name.
-	spa_core::SpaProbe spaProbeRequest(const std::string &nodeName);
-
-	/// Request the xTEDS of the component.
-	std_srvs::Trigger spaXtedsRequest(const std::string &nodeName);
-
 private:
-    /// Callback function for SM-x request to Lookup Service to perform component probe.
-  bool probeCallback(spa_core::SpaLookupServiceProbe::Request &req, spa_core::SpaLookupServiceProbe::Response &res);
+    /// Callback for SM-x request to Lookup Service to perform component probe.
+  bool probeCallback(spa_core::SpaRequestLsProbe::Request &req, spa_core::SpaRequestLsProbe::Response &res);
 
-	/// Callback function for component request to Lookup Service
+  /// Callback for component request to Lookup Service
   bool queryCallback(spa_core::SpaQuery::Request &req, spa_core::SpaQuery::Response &res);
 
-	///< relate to ROS
+  // relate to ROS
 	ros::NodeHandle nh;
-	ros::ServiceServer probeServer;
+  ros::ServiceServer probeServer;
 	ros::ServiceServer queryServer;
-	ros::ServiceClient xtedsClient;
+  ros::ServiceClient probeClient;
+  ros::ServiceClient xtedsReqClient;
 
-	///< relate to xTEDS
-	XtedsRepository xtedsRepository;
-	XtedsParser xtedsParser;
+  // relate to xTEDS
+  //XtedsRepository xtedsRepository;
+  //XtedsParser xtedsParser;
 };
 
 LookupService::LookupService()
 {
-	probeServer = nh.advertiseService("spa_lookup_service_probe", LookupService::probeCallback);
-	queryServer = nh.advertiseService("spa_query", LookupService::queryCallback);
+  probeServer = nh.advertiseService("spa_ls/request_probe", &LookupService::probeCallback, this);
+  queryServer = nh.advertiseService("spa_ls/spa_query", &LookupService::queryCallback, this);
 }
 
 bool LookupService::existXteds(uint64_t xuuid)
 {
+  // to do
 	return false;
 }
 
-std_srvs::Trigger spaXtedsRequest(const std::string &nodeName)
-{
-	xtedsClient = nh.serviceClient<std_srvs::Trigger>(nodeName + "/xteds");
-	std_srvs::Trigger srv;
-	xtedsClient.call(srv);
-	return srv;
-}
+bool LookupService::probeCallback(spa_core::SpaRequestLsProbe::Request &req, spa_core::SpaRequestLsProbe::Response &res)
 
-bool LookupService::probeCallback(spa_core::SpaLookupServiceProbe::Request &req, spa_core::SpaLookupServiceProbe::Response &res)
 {
 	// Probe the SPA component use node name.
-  	spa_core::SpaProbe srv1 = spaProbeRequest(req.nodeName);
+  spa_core::SpaProbe srv1;
+  srv1.request.dialogId = 0;
+  probeClient = nh.serviceClient<spa_core::SpaProbe>(req.nodeName + "/heartbeat");
+  if (!probeClient.call(srv1))
+  {
+    ROS_ERROR("can't connect with %s", req.nodeName.c_str());
+    return false;
+  }
 
-	// Finding if the component's xTEDS already exists in the repository.
-	if (existXteds(srv1.response.xuuid))
-		return true;
+  // Find if the component's xTEDS already exists in the repository.
+  if (existXteds(srv1.response.xuuid))
+  {
+    return true;
+  }
 
 	// Request the xTEDS of the component.
-	std_srvs::Trigger srv2 = spaXtedsRequest(req.nodeName);
-	// parse
-	XtedsParser::XtedsDocPtr doc = xtedsParser.deserialize(srv2.response.message);
-	// store
-	char * name = xtedsParser.getXtedsName(doc);
-	xtedsRepository.saveAsXteds(srv2.response.message, name);
-	xtedsRepository.store(doc);
+  spa_core::SpaXteds srv2;
+  srv2.request.dialogId = 0;
+  xtedsReqClient = nh.serviceClient<spa_core::SpaXteds>(req.nodeName + "/xteds");
+  ROS_INFO("request xteds from %s", req.nodeName.c_str());
+  if (!xtedsReqClient.call(srv2))
+  {
+    ROS_ERROR("can't get xTEDS of %s", req.nodeName.c_str());
+    return false;
+  }
 
+  // parse and store
+  std::string::size_type pos = req.nodeName.find_last_of('/');
+  std::string uri("home/lcc/catkin_ws/src/rosspa/spa_ls/xteds/" + req.nodeName.substr(pos) + ".xml");
+  std::ofstream fout(uri.c_str());
+
+  if (!fout.is_open())
+  {
+    ROS_ERROR("can't save xTEDS file of %s", req.nodeName.c_str());
+    return false;
+  }
+
+  fout << srv2.response.xteds;
+  fout.close();
 	return true;
 }
 
 bool LookupService::queryCallback(spa_core::SpaQuery::Request &req, spa_core::SpaQuery::Response &res)
 {
+  return true;
 }
 
-}
+} // namespace spa
 
 int main(int argc, char **argv)
 {

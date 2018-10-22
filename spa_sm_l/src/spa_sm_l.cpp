@@ -4,7 +4,7 @@
 #include <spa_core/SpaProbe.h> // for heartbeat of components
 #include <actionlib/client/simple_action_client.h>
 #include <spa_core/SpaProbeAction.h>
-#include <spa_core/SpaLookupServiceProbe.h>
+#include <spa_core/SpaRequestLsProbe.h>
 #include <iostream>
 #include <mutex>
 #include <map>
@@ -19,6 +19,7 @@ class SpaLocalManager
 {
 public:
   SpaLocalManager();
+  ~SpaLocalManager() {ros::shutdown(); componentsMonitor.join();}
   void run();
   void showCurrentComponents();
 private:
@@ -32,12 +33,13 @@ private:
   std::mutex comListMutex;
   std::map<const std::string, ComponentInfo> components;
   std::thread componentsMonitor;
+  ros::ServiceClient probeClient;
 };
 
 SpaLocalManager::SpaLocalManager()
 {
-  discoverServer = nh.advertiseService("local/hello", &SpaLocalManager::discoverCallback, this);
-  beatClient = nh.serviceClient<spa_core::SpaLookupServiceProbe>("spa_lookup_service_probe");
+  discoverServer = nh.advertiseService("spa_sm_l/hello", &SpaLocalManager::discoverCallback, this);
+  probeClient = nh.serviceClient<spa_core::SpaRequestLsProbe>("spa_ls/request_probe");
 }
 
 void SpaLocalManager::run()
@@ -47,16 +49,30 @@ void SpaLocalManager::run()
 
 bool SpaLocalManager::discoverCallback(spa_core::Hello::Request& req, spa_core::Hello::Response& res)
 {
-  res.status = 1;
+  // 要不要用 status 返回 xTEDS 的注册情况?
+  res.status = 0;
+
+  ROS_INFO("discovered: %s\ncuuid = %ld, type = %ld", req.nodeName.c_str(), \
+           (long int)req.cuuid, (long int)req.componentType);
+
+  spa_core::SpaRequestLsProbe srv;
+  srv.request.nodeName = req.nodeName;
+  if (probeClient.call(srv))
+  {
+      ROS_INFO("xTEDS is registered!");
+  }
+  else
+  {
+    ROS_ERROR("failed to register xTEDS!");
+    return false;
+  }
 
   ComponentInfo com(req.cuuid, ComponentType(req.componentType));
   comListMutex.lock();
   components[req.nodeName] = com;
   comListMutex.unlock();
 
-  ROS_INFO("discovered: %s", req.nodeName.c_str());
-  ROS_INFO("\tcuuid = %ld, type = %ld", (long int)req.cuuid, (long int)req.componentType);
-  ROS_INFO("sending back acknowledge message");
+  res.status = 1;
   return true;
 }
 
@@ -65,10 +81,8 @@ void SpaLocalManager::showCurrentComponents()
   comListMutex.lock();
   for (auto &p : components)
   {
-    ROS_INFO("Name: %s\n", p.first.c_str());
-    ROS_INFO("CUUID: %ld", p.second.cuuid);
-    ROS_INFO("Type: %d", p.second.componentType);
-    ROS_INFO("Operating Mode: %d", p.second.operatingMode);
+    ROS_INFO("Node Name: %s\nCUUID: %ld\nType: %d\nOperating Mode: %d", \
+             p.first.c_str(), p.second.cuuid, p.second.componentType, p.second.operatingMode);
   }
   comListMutex.unlock();
 }

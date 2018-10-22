@@ -1,5 +1,6 @@
 #include <spa_core/spa_application.h>
 #include <functional>
+#include <fstream>
 
 namespace spa
 {
@@ -18,11 +19,14 @@ void SpaApplication::init()
   nodeName = ros::this_node::getName(); // set node name
   setXuuid();
 
-  discoveryClient = nh.serviceClient<spa_core::Hello>("local/hello");
+  discoveryClient = nh.serviceClient<spa_core::Hello>("spa_sm_l/hello");
   beatServer = nh.advertiseService(nodeName + "/heartbeat", &SpaApplication::beatCallback, this);
   // probeServer = ProbeActionServer(nh, nodeName + "/spa_probe", boost::bind(&SpaApplication::probeCallback, this, _1), false);
   probeServer.start();
   xtedsServer = nh.advertiseService(nodeName + "/xteds", &SpaApplication::xtedsRegisterCallback, this);
+
+  // create a thread to start spinning in the background
+  spin_thread = std::thread(boost::bind(&SpaApplication::spinThread, this));
 
   spa_core::Hello hello;
   hello.request.nodeName = nodeName;
@@ -38,18 +42,14 @@ void SpaApplication::init()
       break;
     }
     else {
-      ROS_INFO("%s: failed to be discovered, retry!", nodeName.c_str());
+      ROS_ERROR("%s: failed to be discovered, retry!", nodeName.c_str());
       rate.sleep();
     }
   }
 
-  // All is fine, call user's initial functions.
+  // All is fine, call user's initial function.
   appInit();
   operatingMode = SPA_OPMODE_FULLY_OPERATIONAL;
-}
-
-void SpaApplication::shutdown()
-{
 }
 
 void SpaApplication::setXuuid()
@@ -87,21 +87,17 @@ void SpaApplication::issueQuery()
 {
 }
 
-bool SpaApplication::xtedsRegisterCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
+bool SpaApplication::xtedsRegisterCallback(spa_core::SpaXteds::Request &req, spa_core::SpaXteds::Response &res)
 {
-  FILE *fp;
-  if (!(fp = fopen(xtedsUri.c_str(), "rb")))
+  std::ifstream fin(xtedsUri.c_str());
+  if (!fin.is_open())
   {
-    std::cout << nodeName << ": unable to get xTEDS\n";
+    ROS_ERROR("%s: unable to read xTEDS", nodeName.c_str());
     return false;
   }
-  char c = fgetc(fp);
-  while (!feof(fp))
-  {
-    res.message += c;
-    c = fgetc(fp);
-  }
-  fclose(fp);
+
+  fin >> res.xteds;
+  fin.close();
 
   return true;
 }
@@ -119,7 +115,7 @@ void SpaApplication::probeCallback(const spa_core::SpaProbeGoalConstPtr &goal)
   int16_t count = goal->replyCount;
   if (count)
   {
-    while (ros::ok())
+    while (ros::ok() && count--)
     {
       feedback.uptime = getUptime();
       feedback.faultIndicator = 0;
@@ -130,9 +126,9 @@ void SpaApplication::probeCallback(const spa_core::SpaProbeGoalConstPtr &goal)
   }
   else
   {
-    while (ros::ok() && count--)
+    while (ros::ok())
     {
-      feedback.uptime = 0;
+      feedback.uptime = getUptime();
       feedback.faultIndicator = 0;
       feedback.operatingMode = operatingMode;
       probeServer.publishFeedback(feedback);

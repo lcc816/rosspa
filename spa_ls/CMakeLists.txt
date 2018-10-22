@@ -16,5 +16,5 @@ catkin_package(CATKIN_DEPENDS spa_core)
 include_directories(${catkin_INCLUDE_DIRS})
 
 add_executable(spa_ls src/spa_ls.cpp)
-add_dependencies(spa_ls ${catkin_EXPORTED_TARGETS})
-target_link_libraries(spa_ls ${catkin_LIABRARIES})
+add_dependencies(spa_ls ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(spa_ls ${catkin_LIBRARIES})

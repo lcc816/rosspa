@@ -1,4 +1,3 @@
-#include <ros/ros.h>
 #include <spa_core/spa_application.h>
 
 namespace spa
@@ -10,9 +9,10 @@ public:
   MyApplication(uint64_t id, ComponentType type, const std::string &uri) :
     SpaApplication(id, type, uri)
   {}
+  ~MyApplication() {appShutdown();}
   void run();
   void appInit();
-  void appShutdown();
+  void appShutdown() {shutdown();}
 };
 
 void MyApplication::run()
@@ -24,6 +24,7 @@ void MyApplication::run()
   while (ros::ok())
   {
     ROS_INFO("I'm running!");
+//    ros::spinOnce();
     rate.sleep();
   }
 }
@@ -33,19 +34,12 @@ void MyApplication::appInit()
 
 }
 
-void MyApplication::appShutdown()
-{
-
 }
-
-}
-
-
 
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "example_node");
 
-  spa::MyApplication myApp(123456, spa::SPA_CMPTYPE_UNKNOWN, "../xteds/Thermometer_Demo.xml");
+  spa::MyApplication myApp(123456, spa::SPA_CMPTYPE_UNKNOWN, "Thermometer_Demo.xml");
   myApp.run();
 }
