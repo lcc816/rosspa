@@ -7,9 +7,6 @@ add_compile_options(-std=c++11)
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS spa_core)
 
-###################################
-## catkin specific configuration ##
-###################################
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES subpose
@@ -17,13 +14,20 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
-###########
-## Build ##
-###########
-
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(example_node src/example_node.cpp)
 target_link_libraries(example_node ${catkin_LIBRARIES})
+
+install(TARGETS example_node
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+# install the xteds file
+install(FILES xteds/Thermometer_Demo.xml
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/xteds
+)

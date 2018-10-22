@@ -18,3 +18,9 @@ include_directories(${catkin_INCLUDE_DIRS})
 add_executable(spa_ls src/spa_ls.cpp)
 add_dependencies(spa_ls ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(spa_ls ${catkin_LIBRARIES})
+
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
