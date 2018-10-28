@@ -18,9 +18,9 @@ class SpaApplication
 public:
   SpaApplication(uint64_t id, ComponentType type, const std::string &uri);
   virtual ~SpaApplication() {}
-  virtual void run() = 0;
   void init();
   virtual void appInit() = 0;
+  virtual void run() = 0;
   void shutdown() {ros::shutdown(); spin_thread.join();}
   virtual void appShutdown() = 0;
 

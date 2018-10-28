@@ -48,6 +48,7 @@ install(TARGETS spa_core
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+# install sub folders spa_core/ and rapidxml/  to the global include directory
 install(DIRECTORY include/
-    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+    DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
 )

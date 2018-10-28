@@ -97,6 +97,7 @@ bool SpaApplication::xtedsRegisterCallback(spa_core::SpaXteds::Request &req, spa
   }
 
   fin >> res.xteds;
+  std::cout << res.xteds << std::endl;
   fin.close();
 
   return true;

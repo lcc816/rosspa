@@ -10,10 +10,15 @@ public:
     SpaApplication(id, type, uri)
   {}
   ~MyApplication() {appShutdown();}
-  void run();
   void appInit();
+  void run();
   void appShutdown() {shutdown();}
 };
+
+void MyApplication::appInit()
+{
+
+}
 
 void MyApplication::run()
 {
@@ -29,17 +34,12 @@ void MyApplication::run()
   }
 }
 
-void MyApplication::appInit()
-{
-
-}
-
 }
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "example_node");
+  ros::init(argc, argv, "example_component");
 
-  spa::MyApplication myApp(123456, spa::SPA_CMPTYPE_UNKNOWN, "Thermometer_Demo.xml");
+  spa::MyApplication myApp(123456, spa::SPA_CMPTYPE_UNKNOWN, "/home/lcc/catkin_ws/src/rosspa/example_component/xteds/Thermometer_Demo.xml");
   myApp.run();
 }
