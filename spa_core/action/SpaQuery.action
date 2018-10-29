@@ -3,6 +3,8 @@ uint8 queryType
 uint8 reserved
 string query
 ---
+uint8 resultMode
+---
 uint64 providerCuuid
 uint64 providerXuuid
 string providerName

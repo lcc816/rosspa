@@ -3,7 +3,8 @@
 #include <spa_core/SpaRequestLsProbe.h>
 #include <spa_core/SpaProbe.h>
 #include <spa_core/SpaXteds.h>
-#include <spa_core/SpaQuery.h>
+#include <actionlib/server/simple_action_server.h>
+#include <spa_core/SpaQueryAction.h>
 //#include <spa_core/xteds_parser.h>
 //#include <spa_core/xteds_repository.h>
 #include <string>
@@ -33,12 +34,13 @@ private:
   bool probeCallback(spa_core::SpaRequestLsProbe::Request &req, spa_core::SpaRequestLsProbe::Response &res);
 
   /// Callback for component request to Lookup Service
-  bool queryCallback(spa_core::SpaQuery::Request &req, spa_core::SpaQuery::Response &res);
+  void queryCallback(const spa_core::SpaQueryGoalConstPtr &goal);
 
   // relate to ROS
 	ros::NodeHandle nh;
   ros::ServiceServer probeServer;
-	ros::ServiceServer queryServer;
+  typedef actionlib::SimpleActionServer<spa_core::SpaQueryAction> SpaQueryServer;
+  SpaQueryServer queryServer;
   ros::ServiceClient probeClient;
   ros::ServiceClient xtedsReqClient;
 
@@ -49,12 +51,13 @@ private:
 };
 
 LookupService::LookupService() :
-  xteds_repo_path(std::string(std::getenv("HOME")) + "/xteds_repo")
+  xteds_repo_path(std::string(std::getenv("HOME")) + "/.xteds_repo"),
+  queryServer(nh, "spa_ls/spa_query", boost::bind(&LookupService::queryCallback, this, _1), false)
 {
   mkdir(xteds_repo_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
   ROS_INFO("set xTEDS repository path to %s", xteds_repo_path.c_str());
   probeServer = nh.advertiseService("spa_ls/request_probe", &LookupService::probeCallback, this);
-  queryServer = nh.advertiseService("spa_ls/spa_query", &LookupService::queryCallback, this);
+  queryServer.start();
 }
 
 bool LookupService::existXteds(uint64_t xuuid)
@@ -64,7 +67,6 @@ bool LookupService::existXteds(uint64_t xuuid)
 }
 
 bool LookupService::probeCallback(spa_core::SpaRequestLsProbe::Request &req, spa_core::SpaRequestLsProbe::Response &res)
-
 {
 	// Probe the SPA component use node name.
   spa_core::SpaProbe srv1;
@@ -109,9 +111,17 @@ bool LookupService::probeCallback(spa_core::SpaRequestLsProbe::Request &req, spa
 	return true;
 }
 
-bool LookupService::queryCallback(spa_core::SpaQuery::Request &req, spa_core::SpaQuery::Response &res)
+void LookupService::queryCallback(const spa_core::SpaQueryGoalConstPtr &goal)
 {
-  return true;
+  spa_core::SpaQueryFeedback feedback;
+  spa_core::SpaQueryResult result;
+  bool success = true;
+
+  if (success)
+  {
+    result.resultMode = 0;
+    queryServer.setSucceeded(result);
+  }
 }
 
 } // namespace spa

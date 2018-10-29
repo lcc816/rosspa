@@ -15,7 +15,9 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 add_action_files(
     DIRECTORY action
-    FILES SpaProbe.action
+    FILES
+    SpaProbe.action
+    SpaQuery.action
 )
 
 add_service_files(
@@ -24,7 +26,6 @@ add_service_files(
     Hello.srv
     SpaProbe.srv
     SpaRequestLsProbe.srv
-    SpaQuery.srv
     SpaXteds.srv
 )
 generate_messages(DEPENDENCIES actionlib_msgs std_msgs)
