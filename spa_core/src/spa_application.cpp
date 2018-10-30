@@ -1,6 +1,7 @@
 #include <spa_core/spa_application.h>
 #include <functional>
 #include <fstream>
+#include <sstream>
 
 namespace spa
 {
@@ -96,8 +97,10 @@ bool SpaApplication::xtedsRegisterCallback(spa_core::SpaXteds::Request &req, spa
     return false;
   }
 
-  fin >> res.xteds;
-  std::cout << res.xteds << std::endl;
+  std::stringstream buffer;
+  buffer << fin.rdbuf();
+  res.xteds = buffer.str();
+  fin.clear();
   fin.close();
 
   return true;

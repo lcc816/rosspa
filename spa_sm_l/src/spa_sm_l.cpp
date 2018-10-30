@@ -59,7 +59,7 @@ bool SpaLocalManager::discoverCallback(spa_core::Hello::Request& req, spa_core::
   srv.request.nodeName = req.nodeName;
   if (probeClient.call(srv))
   {
-      ROS_INFO("xTEDS is registered!");
+      ROS_INFO("registered xTEDS of %s", req.nodeName.c_str());
   }
   else
   {
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "spa_sm_l");
   spa::SpaLocalManager sml;
   sml.run();
-  ROS_INFO("Ready to discovery components.");
+  ROS_INFO("Ready to discover components.");
   ros::spin();
 
   return 0;
