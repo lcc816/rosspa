@@ -5,10 +5,11 @@
 #include <spa_core/SpaXteds.h>
 #include <actionlib/server/simple_action_server.h>
 #include <spa_core/SpaQueryAction.h>
-//#include <spa_core/xteds_parser.h>
-//#include <spa_core/xteds_repository.h>
+#include <spa_core/xteds.h>
+#include <spa_core/xteds_repository.h>
 #include <string>
 #include <fstream>
+#include <memory>
 #include <cstdlib>
 #include <sys/stat.h> // to create directory
 
@@ -46,8 +47,7 @@ private:
 
   // relate to xTEDS
   std::string xteds_repo_path; // = $HOME/.xteds_repo
-  //XtedsRepository xtedsRepository;
-  //XtedsParser xtedsParser;
+  spa::XtedsRepository xtedsRepository;
 };
 
 LookupService::LookupService() :
@@ -96,18 +96,20 @@ bool LookupService::probeCallback(spa_core::SpaRequestLsProbe::Request &req, spa
   }
 
   // parse and store
-  std::string::size_type pos = req.nodeName.find_last_of('/');
-  std::string uri(xteds_repo_path + req.nodeName.substr(pos) + ".xml");
-  std::ofstream fout(uri.c_str());
-
-  if (!fout.is_open())
+  spa::XtedsPtr xteds;
+  try
   {
-    ROS_ERROR("can't save xTEDS file of %s", req.nodeName.c_str());
+    xteds = std::make_shared<Xteds>(srv2.response.xteds, xteds_repo_path.c_str());
+  }
+  catch (std::runtime_error &error)
+  {
+    ROS_ERROR("%s", error.what());
     return false;
   }
 
-  fout << srv2.response.xteds;
-  fout.close();
+  // index
+  xtedsRepository.index(xteds);
+
 	return true;
 }
 
