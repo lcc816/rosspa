@@ -39,13 +39,13 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
-#add_library(uuid src/uuid.cpp src/sha1.c)
+#add_library(uuid src/uuid.cpp)
 #add_dependencies(uuid ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #target_link_libraries(uuid ${catkin_LIBRARIES})
 
-add_library(spa_core src/spa_application.cpp src/xteds_repository.cpp src/uuid.cpp src/sha1.c)
+add_library(spa_core src/spa_application.cpp src/xteds_repository.cpp src/uuid.cpp)
 add_dependencies(spa_core ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(spa_core ${catkin_LIBRARIES})
+target_link_libraries(spa_core ${catkin_LIBRARIES} "libcrypto.so")
 
 install(TARGETS spa_core #uuid
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

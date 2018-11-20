@@ -3,7 +3,9 @@
 #include <arpa/inet.h> // for sequence of octets
 // #include<Winsock2.h>
 #include <spa_core/uuid.h>
-#include <spa_core/sha1.h>
+extern "C"{
+#include <openssl/sha.h> // for SHA1 hash
+}
 
 namespace spa
 {
