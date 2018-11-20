@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <rapidxml/rapidxml.hpp>
+#include <spa_core/uuid.h>
 
 namespace spa
 {
@@ -72,11 +73,11 @@ public:
         m_data.resize(size + 1);
         stream.read(&m_data.front(), static_cast<streamsize>(size));
         m_data[size] = '\0';
+        setXuuid(data());
 
         try
         {
             parse<0>(data());
-            setXuuid(data());
             setName();
         }
         catch (rapidxml::parse_error &exc)
@@ -88,7 +89,7 @@ public:
 
     /// Gets xTEDS UUID.
     /// \return UUID of  xTEDS.
-    uint64_t xuuid() const {return m_xuuid;}
+    uuid_t xuuid() const {return m_xuuid;}
 
     /// Gets xTEDS name.
     /// \return Name of xTEDS.
@@ -113,7 +114,7 @@ private:
     /// \param data File data to set. Must be zero-terminatied.
     void setXuuid(const std::string &data)
     {
-        m_xuuid = 0;
+        uuid_create_sha1_from_name(&m_xuuid, NameSpace_DNS, data.c_str(), data.size());
     }
 
     /// Sets name of xTEDS by parsing its root node.
@@ -126,7 +127,7 @@ private:
 
     std::vector<char> m_data;
     std::string m_uri;
-    uint64_t m_xuuid;
+    uuid_t m_xuuid;
     std::string xteds_name; // xTEDS name
 };
 
