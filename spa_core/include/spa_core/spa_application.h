@@ -21,7 +21,7 @@ public:
   void init();
   virtual void appInit() = 0;
   virtual void run() = 0;
-  void shutdown() {ros::shutdown(); spin_thread.join();}
+  void shutdown() { ros::shutdown(); spin_thread.join(); appShutdown(); }
   virtual void appShutdown() = 0;
 
   void setXuuid();

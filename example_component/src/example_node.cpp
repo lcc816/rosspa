@@ -9,10 +9,10 @@ public:
   MyApplication(uint64_t id, ComponentType type, const std::string &uri) :
     SpaApplication(id, type, uri)
   {}
-  ~MyApplication() {appShutdown();}
+  ~MyApplication() {}
   void appInit();
   void run();
-  void appShutdown() {shutdown();}
+  void appShutdown() {}
 };
 
 void MyApplication::appInit()
