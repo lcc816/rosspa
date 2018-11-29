@@ -2,6 +2,7 @@
 #define SPA_COMMON_H
 
 #include <string>
+#include <spa_core/uuid.h>
 
 namespace spa 
 {
@@ -9,13 +10,14 @@ namespace spa
 enum ComponentType
 {
   SPA_CMPTYPE_UNKNOWN = 0,
-  SPA_CMPTYPE_LS = 1,
-  SPA_CMPTYPE_SM_L = 2,
-  SPA_CMPTYPE_SM_X = 3,
-  SPA_CMPTYPE_SPW = 4,
-  SPA_CMPTYPE_USB = 5,
-  SPA_CMPTYPE_I2C = 6,
-  SPA_CMPTYPE_OP = 7
+  SPA_CMPTYPE_LS,
+  SPA_CMPTYPE_SM_L,
+  SPA_CMPTYPE_SM_X,
+  SPA_CMPTYPE_LCL,
+  SPA_CMPTYPE_SPW,
+  SPA_CMPTYPE_USB,
+  SPA_CMPTYPE_I2C,
+  SPA_CMPTYPE_OPT
 };
 
 enum OperatingMode
@@ -38,7 +40,7 @@ enum OperatingMode
 
 struct ComponentInfo
 {
-  ComponentInfo(uint64_t uuid, ComponentType type) :
+  ComponentInfo(uuid_t uuid, ComponentType type) :
     cuuid(uuid),
     componentType(type),
     operatingMode(SPA_OPMODE_INITIALIZING)
@@ -46,7 +48,7 @@ struct ComponentInfo
 
   ComponentInfo() {}
 
-  uint64_t cuuid;
+  uuid_t cuuid;
   ComponentType componentType;
   OperatingMode operatingMode;
 };

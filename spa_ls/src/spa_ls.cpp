@@ -21,7 +21,7 @@ class LookupService
 public:
 	LookupService();
 	/// Finding if the component's xTEDS already exists in the repository.
-	bool existXteds(uint64_t xuuid);
+	bool existXteds(uuid_t xuuid);
 
   /// change the xTEDS repository path.
   void setXtedsRepoPath(const std::string &path)
@@ -32,7 +32,7 @@ public:
 
 private:
     /// Callback for SM-x request to Lookup Service to perform component probe.
-  bool probeCallback(spa_core::SpaRequestLsProbe::Request &req, spa_core::SpaRequestLsProbe::Response &res);
+  bool requestProbeCallback(spa_core::SpaRequestLsProbe::Request &req, spa_core::SpaRequestLsProbe::Response &res);
 
   /// Callback for component request to Lookup Service
   void queryCallback(const spa_core::SpaQueryGoalConstPtr &goal);
@@ -56,17 +56,17 @@ LookupService::LookupService() :
 {
   mkdir(xteds_repo_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
   ROS_INFO("set xTEDS repository path to %s", xteds_repo_path.c_str());
-  probeServer = nh.advertiseService("spa_ls/request_probe", &LookupService::probeCallback, this);
+  probeServer = nh.advertiseService("spa_ls/request_probe", &LookupService::requestProbeCallback, this);
   queryServer.start();
 }
 
-bool LookupService::existXteds(uint64_t xuuid)
+bool LookupService::existXteds(uuid_t xuuid)
 {
   // to do
 	return false;
 }
 
-bool LookupService::probeCallback(spa_core::SpaRequestLsProbe::Request &req, spa_core::SpaRequestLsProbe::Response &res)
+bool LookupService::requestProbeCallback(spa_core::SpaRequestLsProbe::Request &req, spa_core::SpaRequestLsProbe::Response &res)
 {
 	// Probe the SPA component use node name.
   spa_core::SpaProbe srv1;
@@ -79,7 +79,9 @@ bool LookupService::probeCallback(spa_core::SpaRequestLsProbe::Request &req, spa
   }
 
   // Find if the component's xTEDS already exists in the repository.
-  if (existXteds(srv1.response.xuuid))
+  uuid_t id;
+  id.deserialize(srv1.response.xuuid);
+  if (existXteds(id))
   {
     return true;
   }

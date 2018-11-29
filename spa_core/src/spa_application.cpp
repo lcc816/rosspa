@@ -6,7 +6,7 @@
 namespace spa
 {
 
-SpaApplication::SpaApplication(uint64_t id, ComponentType type, const std::string &uri) :
+SpaApplication::SpaApplication(const uuid_t &id, ComponentType type, const std::string &uri) :
   cuuid(id),
   componentType(type),
   xtedsUri(uri),
@@ -27,11 +27,11 @@ void SpaApplication::init()
   xtedsServer = nh.advertiseService(nodeName + "/xteds", &SpaApplication::xtedsRegisterCallback, this);
 
   // create a thread to start spinning in the background
-  spin_thread = std::thread(boost::bind(&SpaApplication::spinThread, this));
+  spin_thread = std::thread(boost::bind(&SpaApplication::spinThreadCallback, this));
 
   spa_core::Hello hello;
   hello.request.nodeName = nodeName;
-  hello.request.cuuid = cuuid;
+  hello.request.cuuid = cuuid.serialize();
   hello.request.componentType = componentType;
 
   ros::Rate rate(1);
@@ -55,7 +55,23 @@ void SpaApplication::init()
 
 void SpaApplication::setXuuid()
 {
-  xuuid = 0xFFFFFFFF;
+  using namespace std;
+  // load xteds file to a string
+  ifstream stream(xtedsUri.c_str(), ios::binary);
+  if (!stream.is_open())
+  {
+    ROS_ERROR("cannot set xteds uuid: %s", xtedsUri.c_str());
+  }
+  else
+  {
+    stringstream buffer;
+    buffer << stream.rdbuf();
+    string data(buffer.str());
+    // set xuuid
+    uuid_create_sha1_from_name(&xuuid, NameSpace_DNS, data.c_str(), data.size());
+  }
+  stream.clear();
+  stream.close();
 }
 
 uint32_t SpaApplication::getUptime()
@@ -63,7 +79,7 @@ uint32_t SpaApplication::getUptime()
   return 0;
 }
 
-uint64_t SpaApplication::getXuuid()
+uuid_t SpaApplication::getXuuid()
 {
   return xuuid;
 }
@@ -113,8 +129,8 @@ void SpaApplication::probeCallback(const spa_core::SpaProbeGoalConstPtr &goal)
   spa_core::SpaProbeResult result;
 
   feedback.dialogId = goal->dialogId;
-  feedback.cuuid = cuuid;
-  feedback.xuuid = xuuid;
+  feedback.cuuid = cuuid.serialize();
+  feedback.xuuid = xuuid.serialize();
 
   int16_t count = goal->replyCount;
   if (count)
@@ -128,7 +144,7 @@ void SpaApplication::probeCallback(const spa_core::SpaProbeGoalConstPtr &goal)
       rate.sleep();
     }
   }
-  else
+  else // if repyCount == 0, forever feedback
   {
     while (ros::ok())
     {
@@ -148,8 +164,8 @@ bool SpaApplication::beatCallback(spa_core::SpaProbe::Request &req, spa_core::Sp
 {
   res.dialogId = req.dialogId;
   res.uptime = getUptime();
-  res.cuuid = cuuid;
-  res.xuuid = xuuid;
+  res.cuuid = cuuid.serialize();
+  res.xuuid = xuuid.serialize();
   res.faultIndicator = 0;
   res.operatingMode = operatingMode;
 }

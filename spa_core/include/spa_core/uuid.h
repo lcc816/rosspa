@@ -2,8 +2,8 @@
 #define SPA_UUID_H_
 
 #include <stdint.h>
-
-//#undef uuid_t
+#include <string>
+#include <vector>
 
 namespace spa
 {
@@ -16,6 +16,9 @@ struct uuid_t
     uint8_t  clock_seq_hi_and_reserved;
     uint8_t  clock_seq_low;
     uint8_t  node[6];
+    std::string toString() const;
+    std::vector<uint8_t> serialize() const;
+    void deserialize(const std::vector<uint8_t> &data);
 };
 
 /* uuid_create_sha1_from_name -- create a version 5 (SHA-1) UUID

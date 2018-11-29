@@ -6,7 +6,7 @@ namespace spa
 class MyApplication : public SpaApplication
 {
 public:
-  MyApplication(uint64_t id, ComponentType type, const std::string &uri) :
+  MyApplication(const uuid_t &id, ComponentType type, const std::string &uri) :
     SpaApplication(id, type, uri)
   {}
   ~MyApplication() {}
@@ -29,7 +29,6 @@ void MyApplication::run()
   while (ros::ok())
   {
     ROS_INFO("I'm running!");
-//    ros::spinOnce();
     rate.sleep();
   }
 }
@@ -40,6 +39,7 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "example_component");
 
-  spa::MyApplication myApp(123456, spa::SPA_CMPTYPE_UNKNOWN, "/home/lcc/catkin_ws/src/rosspa/example_component/xteds/Thermometer_Demo.xml");
+  spa::uuid_t cuuid = {0x01234567, 0x89ab, 0xcdef, 0x01, 0x23, {0x45, 0x67, 0x89, 0xab, 0xcd, 0xef}};
+  spa::MyApplication myApp(cuuid, spa::SPA_CMPTYPE_UNKNOWN, "/home/lcc/catkin_ws/src/rosspa/example_component/xteds/Thermometer_Demo.xml");
   myApp.run();
 }

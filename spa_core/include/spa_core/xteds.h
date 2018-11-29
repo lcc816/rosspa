@@ -6,7 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <rapidxml/rapidxml.hpp>
-#include <spa_core/uuid.h>
+#include <spa_core/spa_common.h>
 
 namespace spa
 {

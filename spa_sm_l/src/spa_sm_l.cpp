@@ -19,12 +19,12 @@ class SpaLocalManager
 {
 public:
   SpaLocalManager();
-  ~SpaLocalManager() {ros::shutdown(); componentsMonitor.join();}
+  ~SpaLocalManager() {ros::shutdown(); monitorThread.join();}
   void run();
   void showCurrentComponents();
 private:
   bool discoverCallback(spa_core::Hello::Request& req, spa_core::Hello::Response& res);
-  void monitorThread();
+  void monitorThreadCallback();
 
   // relate to ROS
   ros::NodeHandle nh;
@@ -32,32 +32,34 @@ private:
   ros::ServiceClient beatClient;
   std::mutex comListMutex;
   std::map<const std::string, ComponentInfo> components;
-  std::thread componentsMonitor;
-  ros::ServiceClient probeClient;
+  std::thread monitorThread;
+  ros::ServiceClient requestProbeClient;
 };
 
 SpaLocalManager::SpaLocalManager()
 {
   discoverServer = nh.advertiseService("spa_sm_l/hello", &SpaLocalManager::discoverCallback, this);
-  probeClient = nh.serviceClient<spa_core::SpaRequestLsProbe>("spa_ls/request_probe");
+  requestProbeClient = nh.serviceClient<spa_core::SpaRequestLsProbe>("spa_ls/request_probe");
 }
 
 void SpaLocalManager::run()
 {
-  componentsMonitor = std::thread(boost::bind(&SpaLocalManager::monitorThread, this));
+  monitorThread = std::thread(boost::bind(&SpaLocalManager::monitorThreadCallback, this));
 }
 
 bool SpaLocalManager::discoverCallback(spa_core::Hello::Request& req, spa_core::Hello::Response& res)
 {
   // 要不要用 status 返回 xTEDS 的注册情况?
   res.status = 0;
+  uuid_t uuid;
+  uuid.deserialize(req.cuuid);
+  ROS_INFO("discovered: %s\ncuuid = %s, type = %ld", req.nodeName.c_str(), \
+           uuid.toString().c_str(), (long int)req.componentType);
 
-  ROS_INFO("discovered: %s\ncuuid = %ld, type = %ld", req.nodeName.c_str(), \
-           (long int)req.cuuid, (long int)req.componentType);
-
+  // Notify Lookup Service to request the xTEDS.
   spa_core::SpaRequestLsProbe srv;
   srv.request.nodeName = req.nodeName;
-  if (probeClient.call(srv))
+  if (requestProbeClient.call(srv))
   {
       ROS_INFO("registered xTEDS of %s", req.nodeName.c_str());
   }
@@ -67,11 +69,11 @@ bool SpaLocalManager::discoverCallback(spa_core::Hello::Request& req, spa_core::
     return false;
   }
 
-  ComponentInfo com(req.cuuid, ComponentType(req.componentType));
+  ComponentInfo com(uuid, ComponentType(req.componentType));
   comListMutex.lock();
   components[req.nodeName] = com;
   comListMutex.unlock();
-
+  
   res.status = 1;
   return true;
 }
@@ -81,13 +83,14 @@ void SpaLocalManager::showCurrentComponents()
   comListMutex.lock();
   for (auto &p : components)
   {
-    ROS_INFO("Node Name: %s\nCUUID: %ld\nType: %d\nOperating Mode: %d", \
-             p.first.c_str(), p.second.cuuid, p.second.componentType, p.second.operatingMode);
+    ROS_INFO("Node Name: %s\nCUUID: %s\nType: %d\nOperating Mode: %d", \
+      p.first.c_str(), p.second.cuuid.toString().c_str(), p.second.componentType, \
+      p.second.operatingMode);
   }
   comListMutex.unlock();
 }
 
-void SpaLocalManager::monitorThread()
+void SpaLocalManager::monitorThreadCallback()
 {
   spa_core::SpaProbe srv;
   ros::Rate rate(5);

@@ -1,5 +1,4 @@
 #include <cstring>
-#include <iostream>
 #include <arpa/inet.h> // for sequence of octets
 // #include<Winsock2.h>
 #include <spa_core/uuid.h>
@@ -48,6 +47,52 @@ uuid_t NameSpace_X500 = { /* 6ba7b814-9dad-11d1-80b4-00c04fd430c8 */
    0x80, 0xb4, 0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8
 };
 
+std::vector<uint8_t> uuid_t::serialize()  const
+{ 
+    // convert to network byte order
+    uuid_t net_id = *this;
+    net_id.time_low = htonl(net_id.time_low);
+    net_id.time_mid = htons(net_id.time_mid);
+    net_id.time_hi_and_version = htons(net_id.time_hi_and_version);
+    std::vector<uint8_t> res(16);
+    std::memcpy(&res.front(), &net_id, 16);
+    return res;
+}
+
+void uuid_t::deserialize(const std::vector<uint8_t> &data)
+{
+    if (data.size() < 16)
+    {
+        return;
+    }
+    std::memcpy(this, &data.front(), 16);
+    // convert to host byte order
+    time_low = ntohl(time_low);
+    time_mid = ntohs(time_mid);
+    time_hi_and_version = ntohs(time_hi_and_version);
+}
+
+static const char hex_chars[] = "0123456789abcdef";
+
+std::string uuid_t::toString() const
+{
+    std::string res;
+    // convert to network byte order
+    uuid_t net_id = *this;
+    net_id.time_low = htonl(net_id.time_low);
+    net_id.time_mid = htons(net_id.time_mid);
+    net_id.time_hi_and_version = htons(net_id.time_hi_and_version);
+    uint8_t *p = reinterpret_cast<uint8_t *>(&net_id);
+
+    res.clear();
+    for (int i = 0; i < 16; i++)
+    {
+        res += hex_chars[(p[i] >> 4) & 0x0f];
+        res += hex_chars[p[i] & 0x0f];
+    }
+    return res;
+}
+
 void uuid_create_sha1_from_name(uuid_t *uuid, const uuid_t nsid, const char *name, int namelen)
 {
     SHA_CTX c;
@@ -70,6 +115,28 @@ void uuid_create_sha1_from_name(uuid_t *uuid, const uuid_t nsid, const char *nam
     format_uuid_v3or5(uuid, hash, 5);
 }
 
+// uuid_compare --  Compare two UUID's "lexically" and return
+#define CHECK(f1, f2) if (f1 != f2) return f1 < f2 ? -1 : 1;
+int uuid_compare(uuid_t *u1, uuid_t *u2)
+{
+    int i;
+
+    CHECK(u1->time_low, u2->time_low);
+    CHECK(u1->time_mid, u2->time_mid);
+    CHECK(u1->time_hi_and_version, u2->time_hi_and_version);
+    CHECK(u1->clock_seq_hi_and_reserved, u2->clock_seq_hi_and_reserved);
+    CHECK(u1->clock_seq_low, u2->clock_seq_low);
+    for (i = 0; i < 6; i++)
+    {
+        if (u1->node[i] < u2->node[i])
+            return -1;
+        if (u1->node[i] > u2->node[i])
+            return 1;
+    }
+    return 0;
+}
+#undef CHECK
+
 /* format_uuid_v3or5 -- make a UUID from a (pseudo)random 128-bit
    number */
 void format_uuid_v3or5(uuid_t *uuid, unsigned char hash[], int v)
@@ -88,4 +155,3 @@ void format_uuid_v3or5(uuid_t *uuid, unsigned char hash[], int v)
 }
 
 } // namespace spa
-

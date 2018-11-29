@@ -1,5 +1,5 @@
 string nodeName
-uint64 cuuid
+uint8[] cuuid       # Byte array of length 16
 uint8  componentType
 ---
 uint8  status

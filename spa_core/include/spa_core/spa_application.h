@@ -16,7 +16,7 @@ namespace spa
 class SpaApplication
 {
 public:
-  SpaApplication(uint64_t id, ComponentType type, const std::string &uri);
+  SpaApplication(const uuid_t &id, ComponentType type, const std::string &uri);
   virtual ~SpaApplication() {}
   void init();
   virtual void appInit() = 0;
@@ -25,7 +25,7 @@ public:
   virtual void appShutdown() = 0;
 
   void setXuuid();
-  uint64_t getXuuid();
+  uuid_t getXuuid();
   uint32_t getUptime();
   void registerRequest();
   void registerCommand();
@@ -40,12 +40,12 @@ private:
   ///< for heartbeat probe from the SM-L
   bool beatCallback(spa_core::SpaProbe::Request &req, spa_core::SpaProbe::Response &res);
   ///< thread to start spinning in the backroud
-  void spinThread() {ros::spin();}
+  void spinThreadCallback() {ros::spin();}
 
-  uint64_t cuuid;
+  uuid_t cuuid;
   ComponentType componentType;
   std::string xtedsUri;
-  uint64_t xuuid;
+  uuid_t xuuid;
   OperatingMode operatingMode;
 
   // relate to ROS
