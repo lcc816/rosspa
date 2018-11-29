@@ -10,8 +10,7 @@ SpaApplication::SpaApplication(const uuid_t &id, ComponentType type, const std::
   cuuid(id),
   componentType(type),
   xtedsUri(uri),
-  operatingMode(SPA_OPMODE_INITIALIZING),
-  probeServer(nh, nodeName + "/spa_probe", boost::bind(&SpaApplication::probeCallback, this, _1), false)
+  operatingMode(SPA_OPMODE_INITIALIZING)
 {
 }
 
@@ -22,8 +21,6 @@ void SpaApplication::init()
 
   discoveryClient = nh.serviceClient<spa_core::Hello>("spa_sm_l/hello");
   beatServer = nh.advertiseService(nodeName + "/heartbeat", &SpaApplication::beatCallback, this);
-  // probeServer = ProbeActionServer(nh, nodeName + "/spa_probe", boost::bind(&SpaApplication::probeCallback, this, _1), false);
-  probeServer.start();
   xtedsServer = nh.advertiseService(nodeName + "/xteds", &SpaApplication::xtedsRegisterCallback, this);
 
   // create a thread to start spinning in the background
@@ -120,44 +117,6 @@ bool SpaApplication::xtedsRegisterCallback(spa_core::SpaXteds::Request &req, spa
   fin.close();
 
   return true;
-}
-
-void SpaApplication::probeCallback(const spa_core::SpaProbeGoalConstPtr &goal)
-{
-  ros::Rate rate(1 / (goal->replyPeriod));
-  spa_core::SpaProbeFeedback feedback;
-  spa_core::SpaProbeResult result;
-
-  feedback.dialogId = goal->dialogId;
-  feedback.cuuid = cuuid.serialize();
-  feedback.xuuid = xuuid.serialize();
-
-  int16_t count = goal->replyCount;
-  if (count)
-  {
-    while (ros::ok() && count--)
-    {
-      feedback.uptime = getUptime();
-      feedback.faultIndicator = 0;
-      feedback.operatingMode = operatingMode;
-      probeServer.publishFeedback(feedback);
-      rate.sleep();
-    }
-  }
-  else // if repyCount == 0, forever feedback
-  {
-    while (ros::ok())
-    {
-      feedback.uptime = getUptime();
-      feedback.faultIndicator = 0;
-      feedback.operatingMode = operatingMode;
-      probeServer.publishFeedback(feedback);
-      rate.sleep();
-    }
-  }
-
-  result.resultMode = operatingMode;
-  probeServer.setSucceeded(result);
 }
 
 bool SpaApplication::beatCallback(spa_core::SpaProbe::Request &req, spa_core::SpaProbe::Response &res)

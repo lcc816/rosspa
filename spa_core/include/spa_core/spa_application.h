@@ -35,8 +35,6 @@ public:
 private:
   ///< Response to LS for the XTEDS file.
   bool xtedsRegisterCallback(spa_core::SpaXteds::Request &req, spa_core::SpaXteds::Response &res);
-  ///< Response to SPA probe request
-  void probeCallback(const spa_core::SpaProbeGoalConstPtr &goal);
   ///< for heartbeat probe from the SM-L
   bool beatCallback(spa_core::SpaProbe::Request &req, spa_core::SpaProbe::Response &res);
   ///< thread to start spinning in the backroud
@@ -53,8 +51,6 @@ private:
   ros::NodeHandle nh;
   ros::ServiceClient discoveryClient;
   ros::ServiceServer beatServer;
-  typedef actionlib::SimpleActionServer<spa_core::SpaProbeAction> ProbeActionServer;
-  ProbeActionServer probeServer;
   ros::ServiceServer xtedsServer;
   std::thread spin_thread;
 };

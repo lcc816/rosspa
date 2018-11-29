@@ -16,7 +16,6 @@ find_package(Boost REQUIRED COMPONENTS system)
 add_action_files(
     DIRECTORY action
     FILES
-    SpaProbe.action
     SpaQuery.action
 )
 
