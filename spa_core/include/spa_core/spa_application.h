@@ -40,6 +40,7 @@ private:
   ///< thread to start spinning in the backroud
   void spinThreadCallback() {ros::spin();}
 
+  ros::Time startTime;
   uuid_t cuuid;
   ComponentType componentType;
   std::string xtedsUri;

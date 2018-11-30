@@ -16,7 +16,10 @@ SpaApplication::SpaApplication(const uuid_t &id, ComponentType type, const std::
 
 void SpaApplication::init()
 {
-  nodeName = ros::this_node::getName(); // set node name
+  // set starting time
+  startTime = ros::Time::now();
+  // set node name
+  nodeName = ros::this_node::getName();
   setXuuid();
 
   discoveryClient = nh.serviceClient<spa_msgs::Hello>("spa_sm_l/hello");
@@ -73,7 +76,8 @@ void SpaApplication::setXuuid()
 
 uint32_t SpaApplication::getUptime()
 {
-  return 0;
+  ros::Duration uptime(ros::Time::now() - startTime);
+  return uptime.sec;
 }
 
 uuid_t SpaApplication::getXuuid()
