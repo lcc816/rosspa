@@ -3,11 +3,11 @@
 
 #include <ros/ros.h>
 #include <spa_core/spa_common.h>
-#include <spa_core/SpaProbe.h>
-#include <spa_core/Hello.h>
+#include <spa_msgs/SpaProbe.h>
+#include <spa_msgs/Hello.h>
 #include <actionlib/server/simple_action_server.h>
-#include <spa_core/SpaProbeAction.h>
-#include <spa_core/SpaXteds.h>
+#include <spa_msgs/SpaQueryAction.h>
+#include <spa_msgs/SpaXteds.h>
 #include <string>
 #include <thread>
 
@@ -17,7 +17,7 @@ class SpaApplication
 {
 public:
   SpaApplication(const uuid_t &id, ComponentType type, const std::string &uri);
-  virtual ~SpaApplication() {}
+  virtual ~SpaApplication() { shutdown(); }
   void init();
   virtual void appInit() = 0;
   virtual void run() = 0;
@@ -34,9 +34,9 @@ public:
 
 private:
   ///< Response to LS for the XTEDS file.
-  bool xtedsRegisterCallback(spa_core::SpaXteds::Request &req, spa_core::SpaXteds::Response &res);
+  bool xtedsRegisterCallback(spa_msgs::SpaXteds::Request &req, spa_msgs::SpaXteds::Response &res);
   ///< for heartbeat probe from the SM-L
-  bool beatCallback(spa_core::SpaProbe::Request &req, spa_core::SpaProbe::Response &res);
+  bool beatCallback(spa_msgs::SpaProbe::Request &req, spa_msgs::SpaProbe::Response &res);
   ///< thread to start spinning in the backroud
   void spinThreadCallback() {ros::spin();}
 

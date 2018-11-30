@@ -22,7 +22,6 @@ void MyApplication::appInit()
 
 void MyApplication::run()
 {
-  //setXuuid();
   init();
 
   ros::Rate rate(0.2);

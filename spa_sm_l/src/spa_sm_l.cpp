@@ -1,10 +1,8 @@
 #include <ros/ros.h>
 #include <spa_core/spa_common.h>
-#include <spa_core/Hello.h>
-#include <spa_core/SpaProbe.h> // for heartbeat of components
-#include <actionlib/client/simple_action_client.h>
-#include <spa_core/SpaProbeAction.h>
-#include <spa_core/SpaRequestLsProbe.h>
+#include <spa_msgs/Hello.h>
+#include <spa_msgs/SpaProbe.h> // for heartbeat of components
+#include <spa_msgs/SpaRequestLsProbe.h>
 #include <iostream>
 #include <mutex>
 #include <map>
@@ -23,7 +21,7 @@ public:
   void run();
   void showCurrentComponents();
 private:
-  bool discoverCallback(spa_core::Hello::Request& req, spa_core::Hello::Response& res);
+  bool discoverCallback(spa_msgs::Hello::Request& req, spa_msgs::Hello::Response& res);
   void monitorThreadCallback();
 
   // relate to ROS
@@ -39,7 +37,7 @@ private:
 SpaLocalManager::SpaLocalManager()
 {
   discoverServer = nh.advertiseService("spa_sm_l/hello", &SpaLocalManager::discoverCallback, this);
-  requestProbeClient = nh.serviceClient<spa_core::SpaRequestLsProbe>("spa_ls/request_probe");
+  requestProbeClient = nh.serviceClient<spa_msgs::SpaRequestLsProbe>("spa_ls/request_probe");
 }
 
 void SpaLocalManager::run()
@@ -47,7 +45,7 @@ void SpaLocalManager::run()
   monitorThread = std::thread(boost::bind(&SpaLocalManager::monitorThreadCallback, this));
 }
 
-bool SpaLocalManager::discoverCallback(spa_core::Hello::Request& req, spa_core::Hello::Response& res)
+bool SpaLocalManager::discoverCallback(spa_msgs::Hello::Request& req, spa_msgs::Hello::Response& res)
 {
   // 要不要用 status 返回 xTEDS 的注册情况?
   res.status = 0;
@@ -57,7 +55,7 @@ bool SpaLocalManager::discoverCallback(spa_core::Hello::Request& req, spa_core::
            uuid.toString().c_str(), (long int)req.componentType);
 
   // Notify Lookup Service to request the xTEDS.
-  spa_core::SpaRequestLsProbe srv;
+  spa_msgs::SpaRequestLsProbe srv;
   srv.request.nodeName = req.nodeName;
   if (requestProbeClient.call(srv))
   {
@@ -92,7 +90,7 @@ void SpaLocalManager::showCurrentComponents()
 
 void SpaLocalManager::monitorThreadCallback()
 {
-  spa_core::SpaProbe srv;
+  spa_msgs::SpaProbe srv;
   ros::Rate rate(5);
   int retry = 3;
   while (ros::ok())
@@ -100,7 +98,7 @@ void SpaLocalManager::monitorThreadCallback()
     comListMutex.lock();
     for (std::pair<const std::string, ComponentInfo> &p : components)
     {
-      beatClient = nh.serviceClient<spa_core::SpaProbe>(p.first + "/heartbeat");
+      beatClient = nh.serviceClient<spa_msgs::SpaProbe>(p.first + "/heartbeat");
       while (!beatClient.call(srv) && retry)
       {
         // delay and retry

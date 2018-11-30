@@ -19,14 +19,14 @@ void SpaApplication::init()
   nodeName = ros::this_node::getName(); // set node name
   setXuuid();
 
-  discoveryClient = nh.serviceClient<spa_core::Hello>("spa_sm_l/hello");
+  discoveryClient = nh.serviceClient<spa_msgs::Hello>("spa_sm_l/hello");
   beatServer = nh.advertiseService(nodeName + "/heartbeat", &SpaApplication::beatCallback, this);
   xtedsServer = nh.advertiseService(nodeName + "/xteds", &SpaApplication::xtedsRegisterCallback, this);
 
   // create a thread to start spinning in the background
   spin_thread = std::thread(boost::bind(&SpaApplication::spinThreadCallback, this));
 
-  spa_core::Hello hello;
+  spa_msgs::Hello hello;
   hello.request.nodeName = nodeName;
   hello.request.cuuid = cuuid.serialize();
   hello.request.componentType = componentType;
@@ -101,7 +101,7 @@ void SpaApplication::issueQuery()
 {
 }
 
-bool SpaApplication::xtedsRegisterCallback(spa_core::SpaXteds::Request &req, spa_core::SpaXteds::Response &res)
+bool SpaApplication::xtedsRegisterCallback(spa_msgs::SpaXteds::Request &req, spa_msgs::SpaXteds::Response &res)
 {
   std::ifstream fin(xtedsUri.c_str());
   if (!fin.is_open())
@@ -119,7 +119,7 @@ bool SpaApplication::xtedsRegisterCallback(spa_core::SpaXteds::Request &req, spa
   return true;
 }
 
-bool SpaApplication::beatCallback(spa_core::SpaProbe::Request &req, spa_core::SpaProbe::Response &res)
+bool SpaApplication::beatCallback(spa_msgs::SpaProbe::Request &req, spa_msgs::SpaProbe::Response &res)
 {
   res.dialogId = req.dialogId;
   res.uptime = getUptime();

@@ -5,34 +5,15 @@ add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
     roscpp
-    actionlib
-    std_msgs
-    message_generation
-    actionlib_msgs
+    spa_msgs
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
 
-add_action_files(
-    DIRECTORY action
-    FILES
-    SpaQuery.action
-)
-
-add_service_files(
-    DIRECTORY srv
-    FILES
-    Hello.srv
-    SpaProbe.srv
-    SpaRequestLsProbe.srv
-    SpaXteds.srv
-)
-generate_messages(DEPENDENCIES actionlib_msgs std_msgs)
-
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES spa_core
-    CATKIN_DEPENDS std_msgs actionlib actionlib_msgs roscpp
+    CATKIN_DEPENDS roscpp spa_msgs
     DEPENDS Boost
 )
 

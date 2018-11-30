@@ -1,12 +1,12 @@
 #include <ros/ros.h>
 #include <spa_core/spa_common.h>
-#include <spa_core/SpaRequestLsProbe.h>
-#include <spa_core/SpaProbe.h>
-#include <spa_core/SpaXteds.h>
-#include <actionlib/server/simple_action_server.h>
-#include <spa_core/SpaQueryAction.h>
 #include <spa_core/xteds.h>
 #include <spa_core/xteds_repository.h>
+#include <spa_msgs/SpaRequestLsProbe.h>
+#include <spa_msgs/SpaProbe.h>
+#include <spa_msgs/SpaXteds.h>
+#include <actionlib/server/simple_action_server.h>
+#include <spa_msgs/SpaQueryAction.h>
 #include <string>
 #include <fstream>
 #include <memory>
@@ -32,15 +32,15 @@ public:
 
 private:
     /// Callback for SM-x request to Lookup Service to perform component probe.
-  bool requestProbeCallback(spa_core::SpaRequestLsProbe::Request &req, spa_core::SpaRequestLsProbe::Response &res);
+  bool requestProbeCallback(spa_msgs::SpaRequestLsProbe::Request &req, spa_msgs::SpaRequestLsProbe::Response &res);
 
   /// Callback for component request to Lookup Service
-  void queryCallback(const spa_core::SpaQueryGoalConstPtr &goal);
+  void queryCallback(const spa_msgs::SpaQueryGoalConstPtr &goal);
 
   // relate to ROS
 	ros::NodeHandle nh;
   ros::ServiceServer probeServer;
-  typedef actionlib::SimpleActionServer<spa_core::SpaQueryAction> SpaQueryServer;
+  typedef actionlib::SimpleActionServer<spa_msgs::SpaQueryAction> SpaQueryServer;
   SpaQueryServer queryServer;
   ros::ServiceClient probeClient;
   ros::ServiceClient xtedsReqClient;
@@ -66,12 +66,12 @@ bool LookupService::existXteds(uuid_t xuuid)
 	return false;
 }
 
-bool LookupService::requestProbeCallback(spa_core::SpaRequestLsProbe::Request &req, spa_core::SpaRequestLsProbe::Response &res)
+bool LookupService::requestProbeCallback(spa_msgs::SpaRequestLsProbe::Request &req, spa_msgs::SpaRequestLsProbe::Response &res)
 {
 	// Probe the SPA component use node name.
-  spa_core::SpaProbe srv1;
+  spa_msgs::SpaProbe srv1;
   srv1.request.dialogId = 0;
-  probeClient = nh.serviceClient<spa_core::SpaProbe>(req.nodeName + "/heartbeat");
+  probeClient = nh.serviceClient<spa_msgs::SpaProbe>(req.nodeName + "/heartbeat");
   if (!probeClient.call(srv1))
   {
     ROS_ERROR("can't connect with %s", req.nodeName.c_str());
@@ -87,9 +87,9 @@ bool LookupService::requestProbeCallback(spa_core::SpaRequestLsProbe::Request &r
   }
 
 	// Request the xTEDS of the component.
-  spa_core::SpaXteds srv2;
+  spa_msgs::SpaXteds srv2;
   srv2.request.dialogId = 0;
-  xtedsReqClient = nh.serviceClient<spa_core::SpaXteds>(req.nodeName + "/xteds");
+  xtedsReqClient = nh.serviceClient<spa_msgs::SpaXteds>(req.nodeName + "/xteds");
   ROS_INFO("request xteds from %s", req.nodeName.c_str());
   if (!xtedsReqClient.call(srv2))
   {
@@ -115,10 +115,10 @@ bool LookupService::requestProbeCallback(spa_core::SpaRequestLsProbe::Request &r
 	return true;
 }
 
-void LookupService::queryCallback(const spa_core::SpaQueryGoalConstPtr &goal)
+void LookupService::queryCallback(const spa_msgs::SpaQueryGoalConstPtr &goal)
 {
-  spa_core::SpaQueryFeedback feedback;
-  spa_core::SpaQueryResult result;
+  spa_msgs::SpaQueryFeedback feedback;
+  spa_msgs::SpaQueryResult result;
   bool success = true;
 
   if (success)
