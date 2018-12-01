@@ -33,7 +33,6 @@ add_service_files(
 generate_messages(DEPENDENCIES geometry_msgs std_msgs actionlib_msgs)
 
 catkin_package(
-    INCLUDE_DIRS include
     CATKIN_DEPENDS geometry_msgs std_msgs actionlib_msgs actionlib
 )
 

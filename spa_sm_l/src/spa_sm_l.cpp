@@ -51,8 +51,8 @@ bool SpaLocalManager::discoverCallback(spa_msgs::Hello::Request& req, spa_msgs::
   res.status = 0;
   uuid_t uuid;
   uuid.deserialize(req.cuuid);
-  ROS_INFO("discovered: %s\ncuuid = %s, type = %ld", req.nodeName.c_str(), \
-           uuid.toString().c_str(), (long int)req.componentType);
+  ROS_INFO("discovered: %s\n                               cuuid = %s, type = %ld", \
+            req.nodeName.c_str(), uuid.toString().c_str(), (long int)req.componentType);
 
   // Notify Lookup Service to request the xTEDS.
   spa_msgs::SpaRequestLsProbe srv;
@@ -91,7 +91,7 @@ void SpaLocalManager::showCurrentComponents()
 void SpaLocalManager::monitorThreadCallback()
 {
   spa_msgs::SpaProbe srv;
-  ros::Rate rate(5);
+  ros::Duration duration(5);
   int retry = 3;
   while (ros::ok())
   {
@@ -101,8 +101,8 @@ void SpaLocalManager::monitorThreadCallback()
       beatClient = nh.serviceClient<spa_msgs::SpaProbe>(p.first + "/heartbeat");
       while (!beatClient.call(srv) && retry)
       {
-        // delay and retry
-        usleep(1000);
+        // delay for 0.5s and retry
+        ros::Duration(0.5).sleep();
         retry--;
       }
       if (retry > 0)
@@ -111,11 +111,12 @@ void SpaLocalManager::monitorThreadCallback()
       }
       else
       {
+        ROS_INFO("component %s is offline!", p.first.c_str());
         components.erase(p.first);
       }
     }
     comListMutex.unlock();
-    rate.sleep();
+    duration.sleep();
   }
 
 }

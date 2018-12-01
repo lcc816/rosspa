@@ -1,4 +1,5 @@
 #include <spa_core/spa_application.h>
+#include <ros/package.h>
 
 namespace spa
 {
@@ -39,6 +40,6 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "example_component");
 
   spa::uuid_t cuuid = {0x01234567, 0x89ab, 0xcdef, 0x01, 0x23, {0x45, 0x67, 0x89, 0xab, 0xcd, 0xef}};
-  spa::MyApplication myApp(cuuid, spa::SPA_CMPTYPE_UNKNOWN, "/home/lcc/catkin_ws/src/rosspa/example_component/xteds/Thermometer_Demo.xml");
+  spa::MyApplication myApp(cuuid, spa::SPA_CMPTYPE_UNKNOWN, ros::package::getPath("example_component") + "/xteds/Thermometer_Demo.xml");
   myApp.run();
 }
