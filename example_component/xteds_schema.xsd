@@ -1,0 +1,1492 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- version 2.8.1 by APT SPA Ontology group -->
+<!-- Revision History
+	 Dec 07, 2018  Li Changchun   / NUAA Updated xmlns to https://github.com/lcc816/rosspa
+     Mar 29, 2012  J. Christensen / SDL  Updated xmlns to https://pnpsoftware.sdl.usu.edu/redmine/projects/xtedsschema
+     Apr 05, 2012  J. Christensen / SDL  Added DynamicArray element and removed max length limit on IdentifierType and Name
+     Jul 03, 2012  B. Shirley     / SDL  Added Feature 1166 and fixed Bugs 935, 982, 983, and 1167.
+-->
+<!--
+  Style Notes, used throughout the schema:
+    - Mixed case is used in names rather than underscores to combine multiple words (camelCase).
+    - Element and Type names begin with a capital letter.
+    - Type names end with the word "Type".
+    - Attribute names begin with a lowercase letter.
+    - In general, attributes are preferred over elements because they're easier to deal with
+      in SAX and DOM, but whenever the Element/Attribute may one day carry metadata,
+      elements are used.
+    - The bias is toward self-describing names over short, bandwidth conserving ones.
+    - Major elements or any elements used multiple times are defined with a complexType definition
+    - Simplicity in the XML files is favored over simplicity in the Schema
+-->
+<xs:schema xmlns:xt="https://github.com/lcc816/rosspa"
+					 xmlns:xs="http://www.w3.org/2001/XMLSchema"
+					 targetNamespace="https://github.com/lcc816/rosspa"
+					 elementFormDefault="qualified"
+					 attributeFormDefault="unqualified"
+					 version="2.10.1S">
+	
+	<xs:element name="xTEDS">
+		<xs:annotation>
+			<xs:documentation>is the XML Transducer Electronic Data Sheet root element. It defines the static properties and message interface for devices and services.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:choice>
+					<xs:element name="Application" type="xt:ApplicationType">
+						<xs:annotation>
+							<xs:documentation>defines the static properties of a software application.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="Device" type="xt:DeviceType">
+						<xs:annotation>
+							<xs:documentation>defines the static properties of a device. The attributes are based upon the IEEE 1451 TEDS standard.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:choice>
+				<xs:element name="Interface" type="xt:InterfaceType" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation>Defines the interfaces - i.e. the variables and messages - implemented by the component. Note: Interfaces must be self contained. That is, messages in one interface cannot reference variables defined in another interface.</xs:documentation>
+					</xs:annotation>
+					<xs:unique name="Names">
+						<xs:annotation>
+							<xs:documentation>No requiring unique enumeration names within an interface is deprecated.</xs:documentation>
+							<xs:documentation>Curve, CommandMsg, DataMsg, and DataReplyMsg names must be unique within an Interface.</xs:documentation>
+						</xs:annotation>
+						<xs:selector xpath=".//xt:Curve|.//xt:CommandMsg|.//xt:DataMsg|.//xt:DataReplyMsg"/>
+						<xs:field xpath="@name"/>
+					</xs:unique>
+          <xs:unique name="Messages">
+            <xs:annotation>
+              <xs:documentation>Message id's must be unique within the xTEDS.</xs:documentation>
+            </xs:annotation>
+            <xs:selector xpath=".//xt:CommandMsg|.//xt:DataMsg|.//xt:DataReplyMsg"/>
+            <xs:field xpath="@id"/>
+          </xs:unique>
+				</xs:element>
+        <xs:element name="Consumer" type="xt:Consumer" minOccurs="0" maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:documentation>Defines the consumer needs - i.e. the variables and messages - implemented by the component. Note: Interfaces must be self contained. That is, messages in one interface cannot reference variables defined in another interface.</xs:documentation>
+          </xs:annotation>
+          <xs:unique name="ConsumerNames">
+            <xs:annotation>
+              <xs:documentation>Enumeration, Curve, CommandMsg, DataMsg, and DataReplyMsg names must be unique within an Interface.</xs:documentation>
+            </xs:annotation>
+            <xs:selector xpath=".//xt:Enumeration|.//xt:Curve|.//xt:CommandMsg|.//xt:DataMsg|.//xt:DataReplyMsg"/>
+            <xs:field xpath="@name"/>
+          </xs:unique>
+        </xs:element>
+      </xs:sequence>
+			<xs:attribute name="name" type="xt:IdentifierType" use="required">
+				<xs:annotation>
+					<xs:documentation>identifies the xTEDS.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="version" type="xs:decimal" use="optional">
+				<xs:annotation>
+					<xs:documentation>specifies the version number of the xTEDS.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="description" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>describes the purpose of the xTEDS. It is intended for human understanding.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+		<xs:unique name="Interfaces">
+			<xs:annotation>
+				<xs:documentation>Interface id's must be unique within the xTEDS.</xs:documentation>
+			</xs:annotation>
+			<xs:selector xpath=".//xt:Interface"/>
+			<xs:field xpath="@id"/>
+		</xs:unique>
+	</xs:element>
+	
+	<!--Attributes Groups used in xTEDS schema-->
+	<xs:attributeGroup name="xTEDSComponentGroup">
+		<xs:annotation>
+			<xs:documentation>defines the attributes of xTEDS Applications and Devices.</xs:documentation>
+		</xs:annotation>
+    <xs:attribute name="componentKey" type="xt:NameType" use="optional">
+      <xs:annotation>
+        <xs:documentation> Deprecated </xs:documentation>
+        <xs:documentation> specifies a system unique name for the component. This attribute is inserted at run-time from an SDMConfig instance document.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>    
+		<xs:attribute name="name" type="xt:IdentifierType" use="required">
+			<xs:annotation>
+				<xs:documentation>specifies the component name.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<!-- Note: Removal of id attribute makes this schema not backward compatible with other version 2 schemas. -->
+		<xs:attribute name="kind" type="xt:IdentifierType" use="required">
+			<xs:annotation>
+				<xs:documentation>specifies the class of the component. It must be one of the values specified in the Common Data Dictionary.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+    <xs:attribute name="maxSubscriptions" type="xs:positiveInteger" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the maximum number of subscriptions that may occur for this component.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="description" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>describes the component. It is intended for human understanding.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="manufacturerId" type="xs:NMTOKEN" use="optional">
+			<xs:annotation>
+				<xs:documentation>identifies the manufacturer of the component.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="dataSheetURL" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>the URL for the manufacturer's component data sheet for use by humans</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="supplier" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>the definition of this term is not yet available</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	
+	<xs:attributeGroup name="xTEDSApplicationGroup">
+		<xs:annotation>
+			<xs:documentation>defines the attributes of xTEDS Applications.</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="programMemoryRequired" type="xs:positiveInteger" use="required">
+			<xs:annotation>
+				<xs:documentation>the number of bits of program memory required by the application</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="dataMemoryRequired" type="xs:positiveInteger" use="required">
+			<xs:annotation>
+				<xs:documentation>the number of bits of data memory required by the application</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="devLanguageUsed" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>the language used to develop the application</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="compilerUsed" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>the compiler used to build the application</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="systemServicesRequired" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>the operating system services needed by the application</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+    <xs:attribute name="version" type="xs:decimal" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the application's version number.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+	</xs:attributeGroup>
+	
+	<xs:attributeGroup name="xTEDSDeviceGroup">
+		<xs:annotation>
+			<xs:documentation>defines the attributes of xTEDS Devices.</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="modelId" type="xs:NMTOKEN" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the Model number of the Device.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="versionLetter" type="xs:NMTOKEN" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the model's version letter.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="serialNumber" type="xs:NMTOKEN" use="optional">
+			<xs:annotation>
+				<xs:documentation>is the manufacturer's serial number.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+    <xs:attribute name="operatingTemperatureMinimum" type="xs:double" use="optional">
+      <xs:annotation>
+        <xs:documentation>the manufacturer's recommended minimum operating temperature for the device, in degrees K</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="operatingTemperatureMaximum" type="xs:double" use="optional">
+      <xs:annotation>
+        <xs:documentation>the manufacturer's recommended maximum operating temperature for the device, in degrees K</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="maxDCVoltage" type="xs:double" use="optional">
+      <xs:annotation>
+        <xs:documentation>the manufacturer's recommended upper bound on voltage supplied to the device, measured in volts</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="minDCVoltage" type="xs:double" use="optional">
+      <xs:annotation>
+        <xs:documentation>the manufacturer's recommended lower bound on voltage supplied to the device, measured in volts</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="nominalDCVoltage" type="xs:double" use="optional">
+      <xs:annotation>
+        <xs:documentation>the nominal supply voltage for which the manufacturer designed the device, measured in volts</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="peakPower" type="xs:double" use="optional">
+      <xs:annotation>
+        <xs:documentation>the maximum power draw of the device, measured in watts</xs:documentation>
+        <xs:documentation>This property has been named MaxPower in older xTEDS.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="averagePower" type="xs:double" use="optional">
+      <xs:annotation>
+        <xs:documentation>the average power draw of the device, measured in watts, given some standard assumptions about operating conditions</xs:documentation>
+        <xs:documentation>This property has been named AvgPower in older xTEDS.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="standbyPower" type="xs:double" use="optional">
+      <xs:annotation>
+        <xs:documentation>the minimum power draw of the device, measured in watts, when it is turned on but not operating, including ASIM power</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="offPower" type="xs:double" use="optional">
+      <xs:annotation>
+        <xs:documentation>the essential power draw of the device, when it is turned off by the ASIM but the ASIM is running and memory-sustaining power is flowing (as in an encryption device)</xs:documentation>
+        <xs:documentation>This property has been named AsimOnlyPower in older xTEDS.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="maxCurrent" type="xs:double" use="optional">
+      <xs:annotation>
+        <xs:documentation>the manufacturer's recommended maximum current that can flow through the device without harm, measured in amperes</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>    
+    <xs:attribute name="measurementRange" type="xs:token" use="optional">
+			<xs:annotation>
+				<xs:documentation>is the dynamic range of the Device  in engineering units.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="directionXYZ" use="optional">
+			<xs:annotation>
+				<xs:documentation>This unit vector is the alignment axis of the device in the device frame.</xs:documentation>
+			</xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="-?(1|0(\.[0-9]*)?),-?(1|0(\.[0-9]*)?),-?(1|0(\.[0-9]*)?)"/>
+        </xs:restriction>
+      </xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="firmwareLibRev" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>the version number of the firmware</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="inherentNetworkInterfaceType" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>the network interface of the ASIM connection to the device</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="builtInTestAvailable" use="optional">
+			<xs:annotation>
+				<xs:documentation>whether the device responds to a built-in test command</xs:documentation>
+			</xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">          
+          <xs:enumeration value="yes"/>
+					<xs:enumeration value="no"/>
+				</xs:restriction>
+      </xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="simulationAvailable" use="optional">
+			<xs:annotation>
+				<xs:documentation>whether a simulation model for the device is available on a flight simulator</xs:documentation>
+			</xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="yes"/>
+          <xs:enumeration value="no"/>
+        </xs:restriction>
+      </xs:simpleType>
+		</xs:attribute>
+	</xs:attributeGroup>
+	
+	<!--Global Common Types-->
+	<xs:simpleType name="BitfieldFormatType">
+		<xs:annotation>
+			<xs:documentation>is a restricted type to enumerate the valid format values for a bitfield.</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="INT">
+				<xs:annotation>
+					<xs:documentation>Signed Integer of unspecified size. The variable's numberOfBits attribute specifies the number of bits in the bitfield.</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="UINT">
+				<xs:annotation>
+					<xs:documentation>Unsigned Integer of unspecified size. The variable's numberOfBits attribute specifies the number of bits in the bitfield.</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="Scalar.Boolean">
+				<xs:annotation>
+					<xs:documentation>true(1)/false(0) (1 bit)</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:simpleType name="FormatType">
+		<xs:annotation>
+			<xs:documentation>is a restricted type to enumerate the valid format values.</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="INT08">
+				<xs:annotation>
+					<xs:documentation>Signed Byte (8 bits)</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="INT16">
+				<xs:annotation>
+					<xs:documentation>Signed Short Integer (16 bits)</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="INT32">
+				<xs:annotation>
+					<xs:documentation>Signed Long Integer (32 bits)</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="INT64">
+				<xs:annotation>
+					<xs:documentation>Signed Long Long Integer (64 bits)</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="UINT08">
+				<xs:annotation>
+					<xs:documentation>Unsigned Byte (8 bits)</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="UINT16">
+				<xs:annotation>
+					<xs:documentation>Unsigned Short Integer (16 bits)</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="UINT32">
+				<xs:annotation>
+					<xs:documentation>Unsigned Long Integer (32 bits)</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="UINT64">
+				<xs:annotation>
+					<xs:documentation>Unsigned Long Long Integer (64 bits)</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="FLOAT32">
+				<xs:annotation>
+					<xs:documentation>Single Precision IEEE-754 Floating Point (32 bits)</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="FLOAT64">
+				<xs:annotation>
+					<xs:documentation>Double Precision IEEE-754 Floating Point (64 bits)</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>			
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:simpleType name="IdType">
+		<xs:annotation>
+			<xs:documentation>is a restricted integer type to limit IDs from 1 to 255 inclusive.</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:integer">
+			<xs:minInclusive value="1"/>
+			<xs:maxInclusive value="255"/>
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:simpleType name="IdentifierType">
+		<xs:annotation>
+			<xs:documentation>is a restricted type for unique identifiers to specify the pattern and limit the maximum length. The pattern is consistent with the syntax for identifiers in common languages such as C++.</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:NCName">			
+			<xs:pattern value="[a-zA-Z][a-zA-Z0-9_\.]*"/>
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:simpleType name="NameType">
+		<xs:annotation>
+			<xs:documentation>is a restricted type for identifiers to specify the pattern and limit the maximum length. The pattern is consistent with the syntax for identifiers in common languages such as C++.</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:NCName">			
+			<xs:pattern value="[a-zA-Z][a-zA-Z0-9_]*"/>
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:complexType name="QualifierType">
+		<xs:annotation>
+			<xs:documentation>defines the complex type for specifying a qualifier.</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="name" type="xt:NameType" use="required">
+			<xs:annotation>
+				<xs:documentation>specifies the name of the qualifier. It must be one of the qualifier names specified in the Common Data Dictionary. </xs:documentation>
+			</xs:annotation>
+		</xs:attribute>   
+		<xs:attribute name="qualifierValue" type="xs:NMTOKEN" use="required">
+			<xs:annotation>
+				<xs:documentation>specifies the value of the qualifier. It must be a valid value as specified in the Common Data Dictionary for the qualifier name.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="units" type="xs:token" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the engineering units of the value.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	
+	<!--Global Component Types-->
+	<xs:complexType name="BaseComponentType" abstract="true">
+		<xs:annotation>
+			<xs:documentation>defines the abstract type used as the base for all component types.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Qualifier" type="xt:QualifierType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>provides additional information about the component. It can be used to query for components.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+		<xs:attributeGroup ref="xt:xTEDSComponentGroup">
+			<xs:annotation>
+				<xs:documentation>defines the common attributes of all components.</xs:documentation>
+			</xs:annotation>
+		</xs:attributeGroup>
+	</xs:complexType>
+	
+	<xs:complexType name="ApplicationType">
+		<xs:annotation>
+			<xs:documentation>defines the complex type for specifying an application.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="xt:BaseComponentType">
+				<xs:attributeGroup ref="xt:xTEDSApplicationGroup"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<xs:complexType name="DeviceType">
+		<xs:annotation>
+			<xs:documentation>defines the complex type for specifying a device.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="xt:BaseComponentType">
+				<xs:attributeGroup ref="xt:xTEDSDeviceGroup"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<!--Global Variable Types-->
+	<xs:complexType name="CurveType">
+		<xs:annotation>
+			<xs:documentation>is used to create named polynomial curve elements for data conversion from raw data counts to engineering units.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Coef" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>is used exclusively with Curve elements to hold the coefficients for a conversion curve. Each Coef Element describes a value and a exponent to be associated with the value.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:attribute name="exponent" type="xs:nonNegativeInteger" use="required">
+						<xs:annotation>
+							<xs:documentation>specifies the polynomial exponent. The exponent must be unique within a Curve.</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+					<xs:attribute name="value" type="xs:decimal" use="required">
+						<xs:annotation>
+							<xs:documentation>specifies the coefficient value for this exponent term in the polynominal curve.</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+					<xs:attribute name="description" type="xs:string" use="optional">
+						<xs:annotation>
+							<xs:documentation>describes the coefficient. It is intended for human understanding.</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+		<xs:attribute name="name" type="xt:NameType" use="required">
+			<xs:annotation>
+				<xs:documentation>identifies the polynomial Curve. The name must be unique within an Interface.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="description" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>describes the Curve. It is intended for human understanding.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+		
+	<xs:complexType name="EnumerationType">
+		<xs:annotation>
+			<xs:documentation>is used to create elements that associate static names to discrete values. The EnumerationType is a container for Option elements.</xs:documentation>
+		</xs:annotation>
+    <xs:sequence>
+      <xs:element name="Option" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>is used exclusively with EnumerationType elements. Each Option element describes a discrete value and a name to be associated with the value.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:annotation>
+            <xs:documentation>an association of a static name with a discrete value, which is a part of an enumeration</xs:documentation>
+          </xs:annotation>
+          <xs:attribute name="name" type="xs:Name" use="required">
+            <xs:annotation>
+              <xs:documentation>specifies the name to be associated with the discrete value. The name must be unique within an Enumeration.</xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="optionValue" type="xs:nonNegativeInteger" use="required">
+            <xs:annotation>
+              <xs:documentation>is the discrete value for this name.</xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="description" type="xs:string" use="optional">
+            <xs:annotation>
+              <xs:documentation>describes the Option. It is intended for human understanding.</xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="alarm" use="optional">
+            <xs:annotation>
+              <xs:documentation>is the alarm color associated with this state. (red, yellow, green). If no alarm is specified, it is assumed to be GREEN.</xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+              <xs:restriction base="xs:Name">
+                <xs:enumeration value="red"/>
+                <xs:enumeration value="yellow"/>
+                <xs:enumeration value="green"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>          
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="name" type="xt:NameType" use="required">
+      <xs:annotation>
+        <xs:documentation>identifies the Enumeration. The name must be unique within an Interface.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="description" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>describes the Enumeration. It is intended for human understanding.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>		
+	</xs:complexType>
+	
+	<xs:complexType name="VariableType">
+		<xs:annotation>
+			<xs:documentation>defines the complex type for input, output, and state variables.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Qualifier" type="xt:QualifierType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>provides additional information about the Variable. It can be used to query for Variables.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:choice minOccurs="0">
+				<xs:element name="Enumeration" type="xt:EnumerationType">
+					<xs:annotation>
+						<xs:documentation>associates static names to discrete values. </xs:documentation>
+					</xs:annotation>
+					<xs:unique name="OptionNames">
+						<xs:annotation>
+							<xs:documentation>Option names must be unique within an Enumeration.</xs:documentation>
+						</xs:annotation>
+						<xs:selector xpath="xt:Option"/>
+						<xs:field xpath="@name"/>
+					</xs:unique>
+				</xs:element>
+				<xs:element name="Curve" type="xt:CurveType">
+					<xs:annotation>
+						<xs:documentation>defines coefficients for a named polynomial curve for data conversion from raw data counts to engineering units.</xs:documentation>
+					</xs:annotation>
+					<xs:unique name="CoefExponents">
+						<xs:annotation>
+							<xs:documentation>Coef exponents must be unique within a Curve.</xs:documentation>
+						</xs:annotation>
+						<xs:selector xpath="xt:Coef"/>
+						<xs:field xpath="@exponent"/>
+					</xs:unique>
+				</xs:element>
+				<xs:element name="Bitfield" type="xt:BitfieldType" minOccurs="0" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation>A variable of type UINT08/UINT16/UINT32 may contain nested bits that are bitfields within the Variable.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:choice>
+		</xs:sequence>
+		<xs:attribute name="name" type="xt:NameType" use="required">
+			<xs:annotation>
+				<xs:documentation>identifies the Variable. The name must be unique within an Interface.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="kind" type="xt:IdentifierType" use="required">
+			<xs:annotation>
+				<xs:documentation>specifies the category (or class) of the Variable. It must be one of the values specified in the Common Data Dictionary.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+    <xs:attribute name="dataType" type="xt:FormatType" use="required">
+      <xs:annotation>
+        <xs:documentation>specifies the representation of the Variable.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="units" type="xs:token" use="required">
+      <xs:annotation>
+        <xs:documentation>specifies the units  of measure. It must be one of the values specified in the Common Data Dictionary.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+		<xs:attribute name="description" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>describes the Variable. It is intended for human understanding.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="rangeMin" type="xs:decimal" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the inclusive minimum value of the Variable in the units specified in units.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="rangeMax" type="xs:decimal" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the inclusive maximum value of the Variable in the units specified in units.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="yLow" type="xs:decimal" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the low warning (yellow) limit value of the Variable in the units specified in units.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="yHigh" type="xs:decimal" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the high warning (yellow) limit value of the Variable in the units specified in units.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="rLow" type="xs:decimal" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the low alarm (red) limit value of the Variable in the units specified in units.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="rHigh" type="xs:decimal" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the high alarm (red) limit value of the Variable in the units specified in units.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="numberOfArrayElements" type="xs:positiveInteger" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the number of format items in an array.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="defaultValue" type="xs:token" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the default value of the Variable in the units specified by the units attribute. Note this is currently defined as a xs:token type to allow aggregate assignment of default values to an array. This should be re-visited.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+    <xs:attribute name="precision" type="xs:nonNegativeInteger" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the number of digits to the right of the decimal point. Valid only for floating point representations.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="accuracy" type="xs:decimal" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the accuracy range in the units specified in units. The range is defined as plus/minus the value specified, e.g +/- x.xx units.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="scaleFactor" type="xs:decimal" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies a scale factor that can be applied to the Variable value.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="scaleOffset" type="xs:decimal" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies an offset to be used along with scale factor and units that can be applied to the Variable value.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="scaleUnits" type="xs:NMTOKEN" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the units that result from applying the scaleFactor. The units must be defined in the Common Data Dictionary.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>    
+		<xs:attribute name="invalidValue" type="xs:token" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the value that signifies the Variable value is invalid. The value is defined in the units specified by the units attribute. Note this is currently defined as a xs:token type to allow aggregate assignment of invalid values to an array. This should be re-visited.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="coordinateType" use="optional">
+			<xs:annotation>
+				<xs:documentation>the convention for the coordinate system of the referenceFrame attribute</xs:documentation>
+			</xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="Direction.2D.Cartesian"/>
+          <xs:enumeration value="Direction.2D.Polar"/>
+					<xs:enumeration value="Direction.3D.Cartesian"/>
+					<xs:enumeration value="Direction.3D.Spherical"/>
+					<xs:enumeration value="Inertia.3D.Cartesian"/>
+					<xs:enumeration value="Orientation.2D.DCM"/>
+					<xs:enumeration value="Orientation.3D.DCM"/>
+					<xs:enumeration value="Orientation.3D.EulerAngle"/>
+          <xs:enumeration value="Orientation.3D.Quaternion"/>
+					<xs:enumeration value="Position.2D.Cartesian"/>
+					<xs:enumeration value="Position.2D.LatLon"/>
+					<xs:enumeration value="Position.2D.Polar"/>
+					<xs:enumeration value="Position.2D.UPS"/>
+					<xs:enumeration value="Position.2D.UTM"/>
+					<xs:enumeration value="Position.3D.Cartesian"/>
+					<xs:enumeration value="Position.3D.Cylindrical"/>
+          <xs:enumeration value="Position.3D.LLA"/>
+					<xs:enumeration value="Position.3D.Spherical"/>
+				</xs:restriction>
+      </xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="referenceFrame" use="optional">
+			<xs:annotation>
+				<xs:documentation>the reference frame measured by the device</xs:documentation>
+				<xs:documentation>The frame in which the measurement is resolved is the device frame.</xs:documentation>
+				<xs:documentation>If the variable has location and orientation to describe a transducer frame, then that is the frame in which the measurement is resolved.</xs:documentation>
+			</xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="Device"/>
+          <xs:enumeration value="ECEF"/>
+          <xs:enumeration value="ECI.J2000"/>
+          <xs:enumeration value="ECI.MOD"/>
+          <xs:enumeration value="ECI.TOD"/>
+          <xs:enumeration value="LVLH"/>
+          <xs:enumeration value="Mount"/>
+          <xs:enumeration value="Transducer"/>
+          <xs:enumeration value="Vehicle"/>
+        </xs:restriction>
+      </xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="colorModel" use="optional">
+			<xs:annotation>
+				<xs:documentation>the color model used to encode the image contained in the variable</xs:documentation>
+			</xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="RGB"/>
+          <xs:enumeration value="HSV"/>
+          <xs:enumeration value="HSL"/>
+          <xs:enumeration value="CMYK"/>
+          <xs:enumeration value="CIE/XYZ"/>
+          <xs:enumeration value="BW"/>
+        </xs:restriction>
+      </xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="timeModel" use="optional">
+			<xs:annotation>
+				<xs:documentation>the time model used to encode the time contained in the variable</xs:documentation>
+			</xs:annotation>
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="UTC"/>
+					<xs:enumeration value="UT1"/>
+					<xs:enumeration value="TDB"/>
+					<xs:enumeration value="TT"/>
+					<xs:enumeration value="TAI"/>
+					<xs:enumeration value="GPST1"/>
+					<xs:enumeration value="GPST2"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="frequency" type="xs:nonNegativeInteger" use="optional">
+			<xs:annotation>
+				<xs:documentation>How is this attribute used?</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="stability" type="xs:double" use="optional">
+			<xs:annotation>
+				<xs:documentation>How is this attribute used?</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="behavior" use="optional">
+			<xs:annotation>
+				<xs:documentation>a value from the behavior taxonomy</xs:documentation>
+			</xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="ReadOnlyVariable"/>
+          <xs:enumeration value="ReadAndWriteVariable"/>
+          <xs:enumeration value="ReadOnlyConstant"/>
+        </xs:restriction>
+      </xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="location" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>the location in device coordinates of the transducer that produces or uses the value in the variable</xs:documentation>
+				<xs:documentation>the location is a list of three numbers measured in meters, separated by commas, corresponding to the device frame in Cartesian coordinates</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="orientation" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>a unit quaternion transformation of orientation from transducer coordinates to device coordinates, for the transducer that produces or uses the value in the variable</xs:documentation>
+				<xs:documentation>the orientation is a list of four numbers, separated by commas, with the real component first</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="domain" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>a range of values, from the minimum to the maximum possible values of the variable</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+
+  <xs:complexType name="DynamicArrayType">
+    <xs:annotation>
+      <xs:documentation>A DynamicArray is an array whose first 4 bytes contain the total length of the array, and the rest of the bytes are elements defined in the DynamicArray element</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Qualifier" type="xt:QualifierType" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>provides additional information about the Variable. It can be used to query for Variables.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:choice minOccurs="0">
+        <xs:element name="Enumeration" type="xt:EnumerationType">
+          <xs:annotation>
+            <xs:documentation>associates static names to discrete values. </xs:documentation>
+          </xs:annotation>
+          <xs:unique name="DynamicArrayOptionNames">
+            <xs:annotation>
+              <xs:documentation>Option names must be unique within an Enumeration.</xs:documentation>
+            </xs:annotation>
+            <xs:selector xpath="xt:Option"/>
+            <xs:field xpath="@name"/>
+          </xs:unique>
+        </xs:element>
+        <xs:element name="Curve" type="xt:CurveType">
+          <xs:annotation>
+            <xs:documentation>defines coefficients for a named polynomial curve for data conversion from raw data counts to engineering units.</xs:documentation>
+          </xs:annotation>
+          <xs:unique name="DynamicArrayCoefExponents">
+            <xs:annotation>
+              <xs:documentation>Coef exponents must be unique within a Curve.</xs:documentation>
+            </xs:annotation>
+            <xs:selector xpath="xt:Coef"/>
+            <xs:field xpath="@exponent"/>
+          </xs:unique>
+        </xs:element>
+        <xs:element name="Bitfield" type="xt:BitfieldType" minOccurs="0" maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:documentation>A variable of type UINT08/UINT16/UINT32 may contain nested bits that are bitfields within the Variable.</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+      </xs:choice>
+    </xs:sequence>
+    <xs:attribute name="name" type="xt:NameType" use="required">
+      <xs:annotation>
+        <xs:documentation>identifies the Variable. The name must be unique within an Interface.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="kind" type="xt:IdentifierType" use="required">
+      <xs:annotation>
+        <xs:documentation>specifies the category (or class) of the Variable. It must be one of the values specified in the Common Data Dictionary.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="dataType" type="xt:FormatType" use="required">
+      <xs:annotation>
+        <xs:documentation>specifies the representation of the Variable.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="maxArrayElements" type="xs:positiveInteger" use="required">
+      <xs:annotation>
+        <xs:documentation>specifies the maximum number of format items in the dynamic array.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="units" type="xs:token" use="required">
+      <xs:annotation>
+        <xs:documentation>specifies the units  of measure. It must be one of the values specified in the Common Data Dictionary.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="description" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>describes the Variable. It is intended for human understanding.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="rangeMin" type="xs:decimal" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the inclusive minimum value of the Variable in the units specified in units.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="rangeMax" type="xs:decimal" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the inclusive maximum value of the Variable in the units specified in units.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="yLow" type="xs:decimal" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the low warning (yellow) limit value of the Variable in the units specified in units.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="yHigh" type="xs:decimal" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the high warning (yellow) limit value of the Variable in the units specified in units.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="rLow" type="xs:decimal" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the low alarm (red) limit value of the Variable in the units specified in units.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="rHigh" type="xs:decimal" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the high alarm (red) limit value of the Variable in the units specified in units.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="defaultValue" type="xs:token" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the default value of the Variable in the units specified by the units attribute. Note this is currently defined as a xs:token type to allow aggregate assignment of default values to an array. This should be re-visited.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="precision" type="xs:nonNegativeInteger" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the number of digits to the right of the decimal point. Valid only for floating point representations.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="accuracy" type="xs:decimal" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the accuracy range in the units specified in units. The range is defined as plus/minus the value specified, e.g +/- x.xx units.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="scaleFactor" type="xs:decimal" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies a scale factor that can be applied to the Variable value.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="scaleOffset" type="xs:decimal" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies an offset to be used along with scale factor and units that can be applied to the Variable value.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="scaleUnits" type="xs:NMTOKEN" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the units that result from applying the scaleFactor. The units must be defined in the Common Data Dictionary.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="invalidValue" type="xs:token" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the value that signifies the Variable value is invalid. The value is defined in the units specified by the units attribute. Note this is currently defined as a xs:token type to allow aggregate assignment of invalid values to an array. This should be re-visited.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="coordinateType" use="optional">
+      <xs:annotation>
+        <xs:documentation>the convention for the coordinate system of the referenceFrame attribute</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="Direction.2D.Cartesian"/>
+          <xs:enumeration value="Direction.2D.Polar"/>
+          <xs:enumeration value="Direction.3D.Cartesian"/>
+          <xs:enumeration value="Direction.3D.Spherical"/>
+          <xs:enumeration value="Inertia.3D.Cartesian"/>
+          <xs:enumeration value="Orientation.2D.DCM"/>
+          <xs:enumeration value="Orientation.3D.DCM"/>
+          <xs:enumeration value="Orientation.3D.EulerAngle"/>
+          <xs:enumeration value="Orientation.3D.Quaternion"/>
+          <xs:enumeration value="Position.2D.Cartesian"/>
+          <xs:enumeration value="Position.2D.LatLon"/>
+          <xs:enumeration value="Position.2D.Polar"/>
+          <xs:enumeration value="Position.2D.UPS"/>
+          <xs:enumeration value="Position.2D.UTM"/>
+          <xs:enumeration value="Position.3D.Cartesian"/>
+          <xs:enumeration value="Position.3D.Cylindrical"/>
+          <xs:enumeration value="Position.3D.LLA"/>
+          <xs:enumeration value="Position.3D.Spherical"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="referenceFrame" use="optional">
+      <xs:annotation>
+        <xs:documentation>the reference frame measured by the device</xs:documentation>
+        <xs:documentation>The frame in which the measurement is resolved is the device frame.</xs:documentation>
+        <xs:documentation>If the variable has location and orientation to describe a transducer frame, then that is the frame in which the measurement is resolved.</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="Device"/>
+          <xs:enumeration value="ECEF"/>
+          <xs:enumeration value="ECI.J2000"/>
+          <xs:enumeration value="ECI.MOD"/>
+          <xs:enumeration value="ECI.TOD"/>
+          <xs:enumeration value="LVLH"/>
+          <xs:enumeration value="Mount"/>
+          <xs:enumeration value="Transducer"/>
+          <xs:enumeration value="Vehicle"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="colorModel" use="optional">
+      <xs:annotation>
+        <xs:documentation>the color model used to encode the image contained in the variable</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="RGB"/>
+          <xs:enumeration value="HSV"/>
+          <xs:enumeration value="HSL"/>
+          <xs:enumeration value="CMYK"/>
+          <xs:enumeration value="CIE/XYZ"/>
+          <xs:enumeration value="BW"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="timeModel" use="optional">
+      <xs:annotation>
+        <xs:documentation>the time model used to encode the time contained in the variable</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="UTC"/>
+          <xs:enumeration value="UT1"/>
+          <xs:enumeration value="TDB"/>
+          <xs:enumeration value="TT"/>
+          <xs:enumeration value="TAI"/>
+          <xs:enumeration value="GPST1"/>
+          <xs:enumeration value="GPST2"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="frequency" type="xs:nonNegativeInteger" use="optional">
+      <xs:annotation>
+        <xs:documentation>How is this attribute used?</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="stability" type="xs:double" use="optional">
+      <xs:annotation>
+        <xs:documentation>How is this attribute used?</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="behavior" use="optional">
+      <xs:annotation>
+        <xs:documentation>a value from the behavior taxonomy</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="ReadOnlyVariable"/>
+          <xs:enumeration value="ReadAndWriteVariable"/>
+          <xs:enumeration value="ReadOnlyConstant"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="location" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>the location in device coordinates of the transducer that produces or uses the value in the variable</xs:documentation>
+        <xs:documentation>the location is a list of three numbers measured in meters, separated by commas, corresponding to the device frame in Cartesian coordinates</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="orientation" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>a unit quaternion transformation of orientation from transducer coordinates to device coordinates, for the transducer that produces or uses the value in the variable</xs:documentation>
+        <xs:documentation>the orientation is a list of four numbers, separated by commas, with the real component first</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="domain" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>a range of values, from the minimum to the maximum possible values of the variable</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="BitfieldType">
+		<xs:annotation>
+			<xs:documentation>defines the complex type for input, output, and state variables that are bitfields within a variable.</xs:documentation>
+		</xs:annotation>
+    <xs:attribute name="name" type="xt:NameType" use="required">
+      <xs:annotation>
+        <xs:documentation>identifies the Variable. The name must be unique within an Interface.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="kind" type="xt:IdentifierType" use="required">
+      <xs:annotation>
+        <xs:documentation>specifies the category (or class) of the Variable. It must be one of the values specified in the Common Data Dictionary.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="dataType" type="xt:BitfieldFormatType" use="required">
+			<xs:annotation>
+				<xs:documentation>specifies the representation of the bitfield.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+    <xs:attribute name="units" type="xs:token" use="required">
+      <xs:annotation>
+        <xs:documentation>specifies the units  of measure. It must be one of the values specified in the Common Data Dictionary.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+		<xs:attribute name="description" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>describes the Variable. It is intended for human understanding.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="rangeMin" type="xs:decimal" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the inclusive minimum value of the Variable in the units specified in units.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="rangeMax" type="xs:decimal" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the inclusive maximum value of the Variable in the units specified in units.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="yLow" type="xs:decimal" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the low warning (yellow) limit value of the Variable in the units specified in units.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="yHigh" type="xs:decimal" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the high warning (yellow) limit value of the Variable in the units specified in units.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="rLow" type="xs:decimal" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the low alarm (red) limit value of the Variable in the units specified in units.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="rHigh" type="xs:decimal" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the high alarm (red) limit value of the Variable in the units specified in units.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+    <xs:attribute name="numberOfBits" type="xs:positiveInteger" use="optional">
+      <xs:annotation>
+        <xs:documentation>Used in bitfields to specify the number of bits.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="defaultValue" type="xs:token" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the default value of the Variable in the units specified by the units attribute. Note this is currently defined as a xs:token type to allow aggregate assignment of default values to an array. This should be re-visited.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="precision" type="xs:nonNegativeInteger" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the number of digits to the right of the decimal point. Valid only for floating point representations.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="accuracy" type="xs:decimal" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the accuracy range in the units specified in units. The range is defined as plus/minus the value specified, e.g +/- x.xx units.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="scaleFactor" type="xs:decimal" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies a scale factor that can be applied to the Variable value.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="scaleOffset" type="xs:decimal" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies an offset to be used along with scale factor and units that can be applied to the Variable value.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="scaleUnits" type="xs:NMTOKEN" use="optional">
+			<xs:annotation>
+				<xs:documentation>specifies the units that result from applying the scaleFactor. The units must be defined in the Common Data Dictionary.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+    <xs:attribute name="invalidValue" type="xs:token" use="optional">
+      <xs:annotation>
+        <xs:documentation>specifies the value that signifies the Variable value is invalid. The value is defined in the units specified by the units attribute. Note this is currently defined as a xs:token type to allow aggregate assignment of invalid values to an array. This should be re-visited.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+	
+	<!--Global Message Types-->
+	<xs:complexType name="BaseMsgType" abstract="true">
+		<xs:annotation>
+			<xs:documentation>defines the abstract type used as the base for all message types.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Qualifier" type="xt:QualifierType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>provides additional information about the message. It can be used to query for messages.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+			  <xs:element name="Variable" type="xt:VariableType" minOccurs="0" maxOccurs="unbounded">
+				  <xs:annotation>
+					  <xs:documentation>identifies a message parameter.</xs:documentation>
+				  </xs:annotation>
+          <xs:unique name="VariableBitfields">
+            <xs:annotation>
+              <xs:documentation>Bitfields names must be unique within a DynamicArray.</xs:documentation>
+            </xs:annotation>
+            <xs:selector xpath="xt:Bitfield"/>
+            <xs:field xpath="@name"/>
+          </xs:unique>
+			  </xs:element>
+        <xs:element name="DynamicArray" type="xt:DynamicArrayType" minOccurs="0" maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:documentation>identifies a dynamic array message parameter.</xs:documentation>
+          </xs:annotation>
+          <xs:unique name="DynamicArrayBitfields">
+            <xs:annotation>
+              <xs:documentation>Bitfields names must be unique within a Variable.</xs:documentation>
+            </xs:annotation>
+            <xs:selector xpath="xt:Bitfield"/>
+            <xs:field xpath="@name"/>
+          </xs:unique>
+        </xs:element>
+      </xs:choice>
+		</xs:sequence>
+		<xs:attribute name="name" type="xt:NameType" use="required">
+			<xs:annotation>
+				<xs:documentation>identifies the message. The name must be unique within an Interface.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="id" type="xt:IdType" use="required">
+			<xs:annotation>
+				<xs:documentation>specifies a numeric id for the message. The value must be unique within an Interface.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="description" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>describes the message. It is intended for human understanding.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="standardImplemented" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>lists the standards that this message implements.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	
+	<xs:complexType name="CommandMsgType">
+		<xs:annotation>
+			<xs:documentation>defines the complex type for command messages.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="xt:BaseMsgType">
+				<xs:attribute name="maxCmdRate" type="xs:positiveInteger" use="optional">
+					<xs:annotation>
+						<xs:documentation>specifies the maximum commandable message rate in Hz.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<xs:complexType name="DataMsgType">
+		<xs:annotation>
+			<xs:documentation>defines the complex type for data messages.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="xt:BaseMsgType">
+				<xs:attribute name="msgArrival" use="required">
+					<xs:annotation>
+						<xs:documentation>specifies whether the message arrival is EVENT or PERIODIC.  EVENT messages are sent aperiodically by the component in response to an episode or event. PERIODIC messages are sent by the component at a predictable rate specified by the msgRate attribute or by a Variable that can be set by a CommandMsg.</xs:documentation>
+					</xs:annotation>
+					<xs:simpleType>
+						<xs:restriction base="xs:NCName">
+							<xs:enumeration value="EVENT"/>
+							<xs:enumeration value="PERIODIC"/>
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:attribute>
+				<xs:attribute name="msgRate" type="xs:decimal" use="optional">
+					<xs:annotation>
+						<xs:documentation>specifies the default message rate in Hz. This attribute does not apply if the message arrival is EVENT.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attribute name="maxSubscriptions" type="xs:positiveInteger" use="optional">
+					<xs:annotation>
+						<xs:documentation>specifies the maximum number of subscriptions that may occur for this message.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<xs:complexType name="DataReplyMsgType">
+		<xs:annotation>
+			<xs:documentation>defines the complex type for data reply messages.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="xt:BaseMsgType"/>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<!--Global Interface Types-->
+	<xs:complexType name="InterfaceType" mixed="false">
+		<xs:annotation>
+			<xs:documentation>defines the complex type for an interface. Note: Interfaces must be self contained. That is, messages in one interface cannot reference variables defined in another interface.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Qualifier" type="xt:QualifierType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>provides additional information about the Interface. It can be used to query for Interfaces</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:choice minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Allows message exchange elements to appear in any order.</xs:documentation>
+				</xs:annotation>
+				<xs:element name="Command" type="xt:CommandMessageExchangeType">
+					<xs:annotation>
+						<xs:documentation>Defines a One-Way Command Operation using an In-Only or Robust In-Only Message Exchange Pattern with exactly one input command message.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Notification" type="xt:NotificationMessageExchangeType">
+					<xs:annotation>
+						<xs:documentation>Defines a One-Way Data or Event Notification Operation using Out-Only and Robust Out-Only Message Exchange Patterns with exactly one output data message.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Request" type="xt:RequestMessageExchangeType">
+					<xs:annotation>
+						<xs:documentation>Defines a Two-Way Request-Response Operation using In-Out and In-Optional-Out with exactly one input command message followed by one output data reply message.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:choice>
+		</xs:sequence>
+		<xs:attribute name="name" type="xt:NameType" use="required">
+			<xs:annotation>
+				<xs:documentation>identifies the Interface.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="id" type="xt:IdType" use="required">
+			<xs:annotation>
+				<xs:documentation>specifies a numeric id for the Interface. The value must be unique within the xTEDS element.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="description" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>describes the Interface. It is intended for human understanding.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="standardImplemented" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>lists the standards that this interface implements.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	
+	<xs:complexType name="CommandMessageExchangeType">
+		<xs:annotation>
+			<xs:documentation>defines the message exchange pattern for command messages.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="CommandMsg" type="xt:CommandMsgType">
+				<xs:annotation>
+					<xs:documentation>defines a command message received by the component.</xs:documentation>
+				</xs:annotation>
+				<xs:unique name="CommandCommandMsgRefs">
+					<xs:annotation>
+						<xs:documentation>Variable and DynamicArray names must be unique within a CommandMsg.</xs:documentation>
+					</xs:annotation>
+					<xs:selector xpath="xt:Variable|xt:DynamicArray"/>
+					<xs:field xpath="@name"/>
+				</xs:unique>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="NotificationMessageExchangeType">
+		<xs:annotation>
+			<xs:documentation>defines the message exchange pattern for notification messages.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="DataMsg" type="xt:DataMsgType">
+				<xs:annotation>
+					<xs:documentation>defines a data message sent by the component.</xs:documentation>
+				</xs:annotation>
+				<xs:unique name="NotificationDataMsgRefs">
+					<xs:annotation>
+						<xs:documentation>Variable and DynamicArray names must be unique within a DataMsg.</xs:documentation>
+					</xs:annotation>
+					<xs:selector xpath="xt:Variable|xt:DynamicArray"/>
+					<xs:field xpath="@name"/>
+				</xs:unique>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="RequestMessageExchangeType">
+		<xs:annotation>
+			<xs:documentation>defines the message exchange pattern for request/reply messages.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="CommandMsg" type="xt:CommandMsgType">
+				<xs:annotation>
+					<xs:documentation>defines a command message received by the component.</xs:documentation>
+				</xs:annotation>
+				<xs:unique name="RequestCommandMsgRefs">
+					<xs:annotation>
+						<xs:documentation>Variable and DynamicArray names must be unique within a CommandMsg.</xs:documentation>
+					</xs:annotation>
+					<xs:selector xpath="xt:Variable|xt:DynamicArray"/>
+					<xs:field xpath="@name"/>
+				</xs:unique>
+			</xs:element>
+			<xs:element name="DataReplyMsg" type="xt:DataReplyMsgType">
+				<xs:annotation>
+					<xs:documentation>defines a data message sent by the component in response to the associated CommandMsg.</xs:documentation>
+				</xs:annotation>
+				<xs:unique name="RequestDataReplyMsgRefs">
+					<xs:annotation>
+						<xs:documentation>Variable and DynamicArray names must be unique within a DataReplyMsg.</xs:documentation>
+					</xs:annotation>
+					<xs:selector xpath="xt:Variable|xt:DynamicArray"/>
+					<xs:field xpath="@name"/>
+				</xs:unique>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="Consumer" mixed="false">
+		<xs:annotation>
+			<xs:documentation>defines the complex type for an interface. Note: Interfaces must be self contained. That is, messages in one interface cannot reference variables defined in another interface.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Qualifier" type="xt:QualifierType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>provides additional information about the Interface. It can be used to query for Interfaces</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Variable" type="xt:VariableType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>defines the data that can be output via data messages, or input via command messages.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:choice minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Allows message exchange elements to appear in any order.</xs:documentation>
+				</xs:annotation>
+				<xs:element name="Command" type="xt:CommandMessageExchangeType">
+					<xs:annotation>
+						<xs:documentation>Defines a One-Way Command Operation using an In-Only or Robust In-Only Message Exchange Pattern with exactly one input command message.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Notification" type="xt:NotificationMessageExchangeType">
+					<xs:annotation>
+						<xs:documentation>Defines a One-Way Data or Event Notification Operation using Out-Only and Robust Out-Only Message Exchange Patterns with exactly one output data message.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Request" type="xt:RequestMessageExchangeType">
+					<xs:annotation>
+						<xs:documentation>Defines a Two-Way Request-Response Operation using In-Out and In-Optional-Out with exactly one input command message followed by one output data reply message.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:choice>
+		</xs:sequence>
+		<xs:attribute name="name" type="xt:NameType" use="required">
+			<xs:annotation>
+				<xs:documentation>identifies the Interface.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="device" type="xt:IdentifierType" use="optional">
+			<xs:annotation>
+				<xs:documentation>a kind of device that the consumer will use</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="duration" use="optional">
+			<xs:annotation>
+				<xs:documentation>whether the consumption will occur throughout the life of the component, or occasionally</xs:documentation>
+			</xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="SOMETIMES"/>
+          <xs:enumeration value="ALWAYS"/>          
+        </xs:restriction>
+      </xs:simpleType>
+		</xs:attribute>
+	</xs:complexType>
+	
+</xs:schema>
