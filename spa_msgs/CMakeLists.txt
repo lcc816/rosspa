@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
     DIRECTORY msg
     FILES
+    SpaRequestLsProbe.msg
     GetTemperature.msg
 )
 
@@ -26,7 +27,6 @@ add_service_files(
     FILES
     Hello.srv
     SpaProbe.srv
-    SpaRequestLsProbe.srv
     SpaXteds.srv
 )
 

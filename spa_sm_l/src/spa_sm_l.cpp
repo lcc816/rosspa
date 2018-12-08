@@ -31,13 +31,13 @@ private:
   std::mutex comListMutex;
   std::map<const std::string, ComponentInfo> components;
   std::thread monitorThread;
-  ros::ServiceClient requestProbeClient;
+  ros::Publisher reqLsProbePub;
 };
 
 SpaLocalManager::SpaLocalManager()
 {
   discoverServer = nh.advertiseService("spa_sm_l/hello", &SpaLocalManager::discoverCallback, this);
-  requestProbeClient = nh.serviceClient<spa_msgs::SpaRequestLsProbe>("spa_ls/request_probe");
+  reqLsProbePub = nh.advertise<spa_msgs::SpaRequestLsProbe>("spa_ls/request_ls_probe", 100);
 }
 
 void SpaLocalManager::run()
@@ -52,21 +52,14 @@ bool SpaLocalManager::discoverCallback(spa_msgs::Hello::Request& req, spa_msgs::
   uuid_t uuid;
   uuid.deserialize(req.cuuid);
   ROS_INFO("discovered: %s\n                               cuuid = %s, type = %ld", \
-            req.nodeName.c_str(), uuid.toString().c_str(), (long int)req.componentType);
+             req.nodeName.c_str(), uuid.toString().c_str(), (long int)req.componentType);
 
   // Notify Lookup Service to request the xTEDS.
-  spa_msgs::SpaRequestLsProbe srv;
-  srv.request.nodeName = req.nodeName;
-  if (requestProbeClient.call(srv))
-  {
-      ROS_INFO("registered xTEDS of %s", req.nodeName.c_str());
-  }
-  else
-  {
-    ROS_ERROR("failed to register xTEDS!");
-    return false;
-  }
+  spa_msgs::SpaRequestLsProbe msg;
+  msg.nodeName = req.nodeName;
+  reqLsProbePub.publish(msg);
 
+  // Added to discovered component list
   ComponentInfo com(uuid, ComponentType(req.componentType));
   comListMutex.lock();
   components[req.nodeName] = com;
