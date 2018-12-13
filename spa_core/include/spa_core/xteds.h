@@ -23,7 +23,8 @@ public:
     /// and stores it to a directory.
     /// \param file xTEDS data to parse.
     /// \param xteds_repo Directory to store xTEDS.
-    Xteds(const std::string &file, const char *xteds_repo)
+    Xteds(const std::string &file, const char *uri)
+    :   m_uri(uri)
     {
         m_data.assign(file.begin(), file.end());
         m_data.push_back('\0');
@@ -41,7 +42,6 @@ public:
         }
 
         // sotre
-        m_uri = std::string(xteds_repo) + "/" + xteds_name + ".xml";
         std::ofstream fout(m_uri.c_str());
         if (!fout.is_open())
             throw std::runtime_error(std::string("cannot save file ") + m_uri);

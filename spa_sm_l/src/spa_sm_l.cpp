@@ -51,8 +51,8 @@ bool SpaLocalManager::discoverCallback(spa_msgs::Hello::Request& req, spa_msgs::
   res.status = 0;
   uuid_t uuid;
   uuid.deserialize(req.cuuid);
-  ROS_INFO("discovered: %s\n                               cuuid = %s, type = %ld", \
-             req.nodeName.c_str(), uuid.toString().c_str(), (long int)req.componentType);
+  ROS_INFO("discovered: %s\n                                cuuid = %s, type = %ld", \
+          req.nodeName.c_str(), uuid.toString().c_str(), (long int)req.componentType);
 
   // Notify Lookup Service to request the xTEDS.
   spa_msgs::SpaRequestLsProbe msg;
