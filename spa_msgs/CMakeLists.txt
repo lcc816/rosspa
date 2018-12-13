@@ -13,7 +13,8 @@ add_message_files(
     DIRECTORY msg
     FILES
     SpaRequestLsProbe.msg
-    GetTemperature.msg
+    SpaData.msg
+    SpaCommand.msg
 )
 
 add_action_files(
@@ -28,6 +29,7 @@ add_service_files(
     Hello.srv
     SpaProbe.srv
     SpaXteds.srv
+    SpaService.srv
 )
 
 generate_messages(DEPENDENCIES geometry_msgs std_msgs actionlib_msgs)
