@@ -1,0 +1,22 @@
+<package>
+
+  <name>spa_launch</name>
+  <version>0.1.0</version>
+  <description>
+    Launch files for rosspa. 
+  </description>
+
+  <maintainer email="lichngchun816@163.com">Changchun Lee</maintainer>
+
+  <license>BSD</license>
+
+  <url type="repository">https://github.com/lcc816/rosspa.git</url>
+
+  <author email="lichngchun816@163.com">Changchun Lee</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>spa_sm_l</run_depend>
+  <run_depend>spa_ls</run_depend>
+
+</package>

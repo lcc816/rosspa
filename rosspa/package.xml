@@ -20,6 +20,7 @@
   <exec_depend>spa_sm_l</exec_depend>
   <exec_depend>spa_sm_u</exec_depend>
   <exec_depend>spa_msgs</exec_depend>
+  <exec_depend>spa_launch</exec_depend>
 
   <export>
       <metapackage/>
