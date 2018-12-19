@@ -85,12 +85,12 @@ void SpaLocalManager::monitorThreadCallback()
 {
   spa_msgs::SpaProbe srv;
   ros::Duration duration(5);
-  int retry = 3;
   while (ros::ok())
   {
     comListMutex.lock();
     for (std::pair<const std::string, ComponentInfo> &p : components)
     {
+      int retry = 3;
       beatClient = nh.serviceClient<spa_msgs::SpaProbe>(p.first + "/heartbeat");
       while (!beatClient.call(srv) && retry)
       {

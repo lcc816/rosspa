@@ -1,4 +1,14 @@
 <launch>
-    <node pkg="spa_sm_l" type="spa_sm_l" name="spa_sm_l"/>
-    <node pkg="spa_ls" type="spa_ls" name="spa_ls"/>
+    <node 
+        pkg="spa_sm_l" 
+        type="spa_sm_l" 
+        name="spa_sm_l"
+        output="screen"
+    />
+    <node 
+        pkg="spa_ls" 
+        type="spa_ls" 
+        name="spa_ls"
+        output="screen"
+    />
 </launch>
