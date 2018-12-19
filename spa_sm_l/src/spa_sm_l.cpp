@@ -3,6 +3,7 @@
 #include <spa_msgs/Hello.h>
 #include <spa_msgs/SpaProbe.h> // for heartbeat of components
 #include <spa_msgs/SpaRequestLsProbe.h>
+#include <std_srvs/Empty.h>
 #include <iostream>
 #include <mutex>
 #include <map>
@@ -23,10 +24,15 @@ public:
 private:
   bool discoverCallback(spa_msgs::Hello::Request& req, spa_msgs::Hello::Response& res);
   void monitorThreadCallback();
+  bool showCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) 
+  {
+    showCurrentComponents(); return true;
+  }
 
   // relate to ROS
   ros::NodeHandle nh;
   ros::ServiceServer discoverServer;
+  ros::ServiceServer showServer;
   ros::ServiceClient beatClient;
   std::mutex comListMutex;
   std::map<const std::string, ComponentInfo> components;
@@ -37,6 +43,7 @@ private:
 SpaLocalManager::SpaLocalManager()
 {
   discoverServer = nh.advertiseService("spa_sm_l/hello", &SpaLocalManager::discoverCallback, this);
+  showServer = nh.advertiseService("spa_sm_l/show", &SpaLocalManager::showCallback, this);
   reqLsProbePub = nh.advertise<spa_msgs::SpaRequestLsProbe>("spa_ls/request_ls_probe", 100);
 }
 
@@ -74,7 +81,10 @@ void SpaLocalManager::showCurrentComponents()
   comListMutex.lock();
   for (auto &p : components)
   {
-    ROS_INFO("Node Name: %s\nCUUID: %s\nType: %d\nOperating Mode: %d", \
+    ROS_INFO("Node Name: %s"
+      "\n                                CUUID: %s"
+      "\n                                Type: %d"
+      "\n                                Operating Mode: %d\n", \
       p.first.c_str(), p.second.cuuid.toString().c_str(), p.second.componentType, \
       p.second.operatingMode);
   }
