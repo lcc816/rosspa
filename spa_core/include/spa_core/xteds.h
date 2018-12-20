@@ -117,11 +117,17 @@ private:
     }
 
     /// Sets name of xTEDS by parsing its root node.
-    void setName()
+    bool setName()
     {
-        XtedsNode *cmpt = first_node(); // root node
-        XtedsAttribute *attr = cmpt->first_attribute("name");
-        xteds_name = std::string(attr->value());
+        if (XtedsNode *cmpt = first_node()) // root node
+        {
+            if (XtedsAttribute *attr = cmpt->first_attribute("name"))
+            {
+                xteds_name = std::string(attr->value());
+                return true;
+            }
+        }
+        return false;
     }
 
     std::vector<char> m_data;

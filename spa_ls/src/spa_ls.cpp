@@ -103,6 +103,7 @@ void LookupService::requestProbeCallback(const spa_msgs::SpaRequestLsProbe::Cons
   try // Unable to parse or fail to store
   {
     xteds = std::make_shared<Xteds>(srv2.response.xteds, uri.c_str());
+    ROS_INFO("saved xTEDS file to %s", uri.c_str());
   }
   catch (std::runtime_error &error)
   {

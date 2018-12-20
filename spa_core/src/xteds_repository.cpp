@@ -43,8 +43,12 @@ void XtedsRepository::index(const XtedsPtr &doc)
 
 inline void XtedsRepository::index_node(XtedsNode * const node)
 {
-    XtedsAttribute *attr = nullptr;
-    if (attr = node->first_attribute("name"))
+    if (node == nullptr)
+    {
+        return;
+    }
+
+    if (XtedsAttribute *attr = node->first_attribute("name"))
     {
         std::string itemName(attr->value());
         itemNameIndex.insert(itemName, node);
