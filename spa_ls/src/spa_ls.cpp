@@ -100,7 +100,7 @@ void LookupService::requestProbeCallback(const spa_msgs::SpaRequestLsProbe::Cons
   // parse and store
   XtedsPtr xteds;
   std::string uri = xteds_repo_path + msg->nodeName + ".xml";
-  try
+  try // Unable to parse or fail to store
   {
     xteds = std::make_shared<Xteds>(srv2.response.xteds, uri.c_str());
   }

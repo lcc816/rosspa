@@ -1,0 +1,12 @@
+string producerName     # Node name of the producer component
+string consumerName     # Node name of the consumer component
+uint32 leasePeriod      # Durition of the subscription, 0=unlimited
+uint16 dialogId         # Dialog identifier set by the requester
+uint16 deliveryRateDivisor # Subscribe to every nth message
+uint8 interfaceId       # xTEDS interface id
+uint8 messageId         # xTEDS message Id 
+uint8 subscriptionPriority # subscription priority, 0=highest, 255=lowest
+uint8 type              # message type, subscription or unsbuscription
+---
+uint16 dialogId         # Dialog identifier set by the requester
+uint8 replyType         # Indicates subscription acceptance, deny, or cancellation

@@ -37,8 +37,7 @@ public:
         }
         catch (rapidxml::parse_error &exc)
         {
-            std::cout << "can't parse file " << std::endl;
-            std::cout << exc.what() << std::endl;
+            throw std::runtime_error(std::string("cannot parse file: ") + exc.what());
         }
 
         // sotre
