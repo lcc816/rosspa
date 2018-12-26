@@ -7,7 +7,7 @@ namespace spa
 class MyApplication : public SpaApplication
 {
 public:
-  MyApplication(const uuid_t &id, ComponentType type, const std::string &uri) :
+  MyApplication(const std::string &id, ComponentType type, const std::string &uri) :
     SpaApplication(id, type, uri)
   {}
   ~MyApplication() {}
@@ -26,6 +26,15 @@ void MyApplication::run()
   init();
 
   ros::Rate rate(0.2);
+  std::string query(
+    "<SpaQuery msgType=\"Notification\">\n"
+    " <Variable>\n"
+    "   <Attribute name=\"kind\" operand=\"eq\" value=\"Temperature\">\n"
+    "   <Attribute name=\"units\" operand=\"eq\" value=\"degC\">\n"
+    " </Variable>\n"
+    "</SpaQuery>"
+  );
+  issueQuery(query, SPA_REQREG_CURRENT);
   while (ros::ok())
   {
     ROS_INFO("I'm running!");
@@ -39,7 +48,8 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "example_node");
 
-  spa::uuid_t cuuid = {0x01234567, 0x89ab, 0xcdef, 0x01, 0x23, {0x45, 0x67, 0x89, 0xab, 0xcd, 0xef}};
-  spa::MyApplication myApp(cuuid, spa::SPA_CMPTYPE_UNKNOWN, ros::package::getPath("example_component") + "/xteds/Thermometer_Demo.xml");
+  std::string cuuid("00112233445566778899aabbccddee"); // length = 32
+  std::string uri(ros::package::getPath("example_component") + "/xteds/Thermometer_Demo.xml");
+  spa::MyApplication myApp(cuuid, spa::SPA_CMPTYPE_UNKNOWN, uri);
   myApp.run();
 }

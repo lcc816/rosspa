@@ -6,7 +6,7 @@
 namespace spa
 {
 
-SpaApplication::SpaApplication(const uuid_t &id, ComponentType type, const std::string &uri) :
+SpaApplication::SpaApplication(const std::string &id, const ComponentType type, const std::string &uri) :
   cuuid(id),
   componentType(type),
   xtedsUri(uri),
@@ -25,13 +25,14 @@ void SpaApplication::init()
   discoveryClient = nh.serviceClient<spa_msgs::Hello>("spa_sm_l/hello");
   beatServer = nh.advertiseService(nodeName + "/heartbeat", &SpaApplication::beatCallback, this);
   xtedsServer = nh.advertiseService(nodeName + "/xteds", &SpaApplication::xtedsRegisterCallback, this);
+  queryClient = std::make_shared<SpaQueryType>("spa_ls/spa_query", false);
 
   // create a thread to start spinning in the background
   spin_thread = std::thread(boost::bind(&SpaApplication::spinThreadCallback, this));
 
   spa_msgs::Hello hello;
   hello.request.nodeName = nodeName;
-  hello.request.cuuid = cuuid.serialize();
+  hello.request.cuuid = cuuid;
   hello.request.componentType = componentType;
 
   ros::Rate rate(1);
@@ -68,7 +69,9 @@ void SpaApplication::setXuuid()
     buffer << stream.rdbuf();
     string data(buffer.str());
     // set xuuid
-    uuid_create_sha1_from_name(&xuuid, NameSpace_DNS, data.c_str(), data.size());
+    uuid_t temp;
+    uuid_create_sha1_from_name(&temp, NameSpace_DNS, data.c_str(), data.size());
+    xuuid = temp.toString();
   }
   stream.clear();
   stream.close();
@@ -80,7 +83,7 @@ uint32_t SpaApplication::getUptime()
   return uptime.sec;
 }
 
-uuid_t SpaApplication::getXuuid()
+std::string SpaApplication::getXuuid()
 {
   return xuuid;
 }
@@ -101,8 +104,15 @@ void SpaApplication::registerNotification()
 
 }
 
-void SpaApplication::issueQuery()
+void SpaApplication::issueQuery(const std::string &query, const QueryType type)
 {
+  spa_msgs::SpaQueryGoal goal;
+  goal.nodeName = nodeName;
+  goal.dialogId = 0;
+  goal.queryType = type;
+  goal.query = query;
+  
+  queryClient->sendGoal(goal);
 }
 
 bool SpaApplication::xtedsRegisterCallback(spa_msgs::SpaXteds::Request &req, spa_msgs::SpaXteds::Response &res)
@@ -127,8 +137,8 @@ bool SpaApplication::beatCallback(spa_msgs::SpaProbe::Request &req, spa_msgs::Sp
 {
   res.dialogId = req.dialogId;
   res.uptime = getUptime();
-  res.cuuid = cuuid.serialize();
-  res.xuuid = xuuid.serialize();
+  res.cuuid = cuuid;
+  res.xuuid = xuuid;
   res.faultIndicator = 0;
   res.operatingMode = operatingMode;
 }

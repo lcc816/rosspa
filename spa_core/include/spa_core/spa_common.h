@@ -38,9 +38,23 @@ enum OperatingMode
   SPA_OPMODE_USER_DEFINED_ANOMALY = 41
 };
 
+enum QueryType
+{
+  SPA_REQREG_CURRENT = 0,
+  SPA_REQREG_CURRENT_AND_FUTURE = 5,
+  SPA_REQREG_CURRENT_FUTURE_AND_CANCELLATIONS = 7,
+  SPA_REQREG_CANCEL = 11
+};
+
+enum ReplyType
+{
+  REGISTRATION = 0,
+  CANCELLATION
+};
+
 struct ComponentInfo
 {
-  ComponentInfo(uuid_t uuid, ComponentType type) :
+  ComponentInfo(const std::string &uuid, const ComponentType type) :
     cuuid(uuid),
     componentType(type),
     operatingMode(SPA_OPMODE_INITIALIZING)
@@ -48,7 +62,7 @@ struct ComponentInfo
 
   ComponentInfo() {}
 
-  uuid_t cuuid;
+  std::string cuuid;
   ComponentType componentType;
   OperatingMode operatingMode;
 };

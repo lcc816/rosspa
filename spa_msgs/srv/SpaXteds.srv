@@ -1,5 +1,5 @@
-uint8[] cuuid       # Serialized UUID of the SPA component.
-uint8[] xuuid       # Serialized UUID of the xTEDS.
+string  cuuid       # UUID string of the SPA component.
+string  xuuid       # UUID string of the xTEDS.
 uint16  dialogId
 uint8   requestType # Indicator for which field to use in the request
 ---

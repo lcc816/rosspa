@@ -5,7 +5,7 @@
 #include <spa_core/spa_common.h>
 #include <spa_msgs/SpaProbe.h>
 #include <spa_msgs/Hello.h>
-#include <actionlib/server/simple_action_server.h>
+#include <actionlib/client/simple_action_client.h>
 #include <spa_msgs/SpaQueryAction.h>
 #include <spa_msgs/SpaXteds.h>
 #include <string>
@@ -16,7 +16,7 @@ namespace spa
 class SpaApplication
 {
 public:
-  SpaApplication(const uuid_t &id, ComponentType type, const std::string &uri);
+  SpaApplication(const std::string &id, const ComponentType type, const std::string &uri);
   virtual ~SpaApplication() { shutdown(); }
   void init();
   virtual void appInit() = 0;
@@ -25,12 +25,12 @@ public:
   virtual void appShutdown() = 0;
 
   void setXuuid();
-  uuid_t getXuuid();
+  std::string getXuuid();
   uint32_t getUptime();
   void registerRequest();
   void registerCommand();
   void registerNotification();
-  void issueQuery();
+  void issueQuery(const std::string &query, const QueryType type);
 
 private:
   ///< Response to LS for the XTEDS file.
@@ -41,10 +41,10 @@ private:
   void spinThreadCallback() {ros::spin();}
 
   ros::Time startTime;
-  uuid_t cuuid;
+  std::string cuuid;
   ComponentType componentType;
   std::string xtedsUri;
-  uuid_t xuuid;
+  std::string xuuid;
   OperatingMode operatingMode;
 
   // relate to ROS
@@ -53,6 +53,8 @@ private:
   ros::ServiceClient discoveryClient;
   ros::ServiceServer beatServer;
   ros::ServiceServer xtedsServer;
+  typedef actionlib::SimpleActionClient<spa_msgs::SpaQueryAction> SpaQueryType;
+  std::shared_ptr<SpaQueryType> queryClient;
   std::thread spin_thread;
 };
 

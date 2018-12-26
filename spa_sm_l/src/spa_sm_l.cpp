@@ -56,10 +56,9 @@ bool SpaLocalManager::discoverCallback(spa_msgs::Hello::Request& req, spa_msgs::
 {
   // 要不要用 status 返回 xTEDS 的注册情况?
   res.status = 0;
-  uuid_t uuid;
-  uuid.deserialize(req.cuuid);
+  std::string uuid = req.cuuid;
   ROS_INFO("discovered: %s\n                                cuuid = %s, type = %ld", \
-          req.nodeName.c_str(), uuid.toString().c_str(), (long int)req.componentType);
+          req.nodeName.c_str(), uuid.c_str(), (long int)req.componentType);
 
   // Notify Lookup Service to request the xTEDS.
   spa_msgs::SpaRequestLsProbe msg;
@@ -85,7 +84,7 @@ void SpaLocalManager::showCurrentComponents()
       "\n                                CUUID: %s"
       "\n                                Type: %d"
       "\n                                Operating Mode: %d\n", \
-      p.first.c_str(), p.second.cuuid.toString().c_str(), p.second.componentType, \
+      p.first.c_str(), p.second.cuuid.c_str(), p.second.componentType, \
       p.second.operatingMode);
   }
   comListMutex.unlock();

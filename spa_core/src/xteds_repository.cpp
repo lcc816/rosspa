@@ -8,27 +8,23 @@ namespace spa
 
 /*----------- Implementation of XtedsIndex -------------*/
 
-void XtedsIndex::insert(const std::string &name, XtedsNode * const node)
+bool XtedsIndex::insert(XtedsNode * const node, const std::string &name)
 {
-    table.insert(XtedsTable::value_type(name, node));
+    return table.insert(XtedsTable::value_type(node, name)).second;
 }
 
-void XtedsIndex::erase(const std::string &name, XtedsNode * const node)
+bool XtedsIndex::erase(XtedsNode * const node)
 {
-    std::pair<iterator, iterator> range = findItems(name);
-    if (range.first == table.end())
-        return;
-
-    for (iterator it = range.first; it != range.second; )
-        if (it->second == node)
-            it = table.erase(it);
-        else
-            ++it;
+    if (table.erase(node))
+    {
+        return true;
+    }
+    return false;
 }
 
-std::pair<XtedsIndex::iterator, XtedsIndex::iterator> XtedsIndex::findItems(const std::string &name)
+std::string XtedsIndex::getName(XtedsNode * const node)
 {
-    return table.equal_range(name);
+    return table[node];
 }
 
 /*---------- Implementation of XtedsRepository ----------*/
@@ -50,19 +46,21 @@ inline void XtedsRepository::index_node(XtedsNode * const node)
 
     if (XtedsAttribute *attr = node->first_attribute("name"))
     {
-        std::string itemName(attr->value());
-        itemNameIndex.insert(itemName, node);
+        std::string nodeName(attr->value());
 
         if (std::strcmp(node->name(), "Application") || std::strcmp(node->name(), "Device"))
         {
-            componentNameIndex.insert(itemName, node);
+            componentNameIndex.insert(node, nodeName);
         }
         else if (std::strcmp(node->name(), "Interface"))
         {
-            interfaceNameIndex.insert(itemName, node);
+            interfaceNameIndex.insert(node, nodeName);
         }
-        else // Variable || DataMsg || CommandMsg || DataReplyMsg || BitField ...
-            ;
+        else if (std::strcmp(node->name(), "DataMsg") || std::strcmp(node->name(), "CommandMsg") || \
+            std::strcmp(node->name(), "DataReplyMsg"))
+        {
+            itemNameIndex.insert(node, nodeName);
+        }
     }
 
     for (XtedsNode *child = node->first_node(); child; child = child->next_sibling())

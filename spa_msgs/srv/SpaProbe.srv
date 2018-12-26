@@ -4,7 +4,7 @@ int16   replyPeriod # Period between SPAProbeReply messages.
 ---
 uint16  dialogId    # Dialog identifier set by the requester.
 uint32  uptime      # Senconds since power on.
-uint8[] cuuid       # Serialized UUID of the SPA component.
-uint8[] xuuid       # Serialized UUID of the xTEDS.
+string  cuuid       # UUID string of the SPA component.
+string  xuuid       # UUID string of the xTEDS.
 uint32  faultIndicator  # Indicates presense of fault.
 uint8   operatingMode # Enumeration of operating mode.

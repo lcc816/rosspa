@@ -17,7 +17,7 @@ public:
     ~XtedsIndex() {}
 
     /// Container type of table to sotre the nodes.
-    typedef std::unordered_multimap<std::string, XtedsNode *> XtedsTable;
+    typedef std::unordered_map<XtedsNode *, std::string> XtedsTable;
     /// Item type.
     //typedef XtedsTable::value_type ItemType;
     /// Iterator to item.
@@ -26,22 +26,23 @@ public:
     /// Insert a node into the table.
     /// \param node Reference of item to be indexed.
     /// \param name Name of item.
-    void insert(const std::string &name, XtedsNode * const node);
+    /// \return Return true if the insert succeeds.
+    bool insert(XtedsNode * const node, const std::string &name);
 
     /// Insert a node into the table.
     /// \param node Reference of item to be deleted.
     /// \param name Name of item.
-    void erase(const std::string &name, XtedsNode * const node);
+    /// \return Return true if the erase succeeds
+    bool erase(XtedsNode * const node);
 
-    /// Find all items with given name.
-    /// \param name Name to look for.
-    /// \return containing a pair of iterators defining the range.
-    std::pair<iterator, iterator> findItems(const std::string &name);
+    /// Get name of an item.
+    /// \param name Pointer to item to search for.
+    /// \return Name of item search for.
+    std::string getName(XtedsNode * const node);
 
 private:
     XtedsTable table;
 };
-
 
 /// The type of pointer to xTEDS object
 typedef std::shared_ptr<Xteds> XtedsPtr;
@@ -63,7 +64,6 @@ public:
     /// \param node Pointer to the node to be indexed.
     void index_node(XtedsNode * const node);
 
-private:
     XtedsList xtedsList;
     XtedsIndex componentNameIndex;
     XtedsIndex interfaceNameIndex;

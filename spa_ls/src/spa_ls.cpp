@@ -11,17 +11,25 @@
 #include <fstream>
 #include <memory>
 #include <cstdlib>
+#include <cstdio>
+#include <cstring>
 #include <sys/stat.h> // to create directory
 
 namespace spa
 {
+
+struct RegisteredComponent
+{
+  std::string nodeName;
+  uint8_t status; // 0 represents active
+};
 
 class LookupService
 {
 public:
 	LookupService();
 	/// Finding if the component's xTEDS already exists in the repository.
-	bool existXteds(uuid_t xuuid);
+	bool existXteds(const std::string &xuuid);
 
   /// change the xTEDS repository path.
   void setXtedsRepoPath(const std::string &path)
@@ -30,8 +38,18 @@ public:
     mkdir(xteds_repo_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
   }
 
+  bool matchMsgType(XtedsNode *root, XtedsNode *msgType);
+
+  bool matchMessage(XtedsNode *root, XtedsNode *msg);
+
+  bool matchVariable(XtedsNode *varNode, XtedsNode *var);
+
+  bool matchAttribute(XtedsNode *attrNode, XtedsNode *var);
+
+  bool numericCompare(double num1, double num2, char *operand);
+
 private:
-    /// Callback for SM-x request to Lookup Service to perform component probe.
+  /// Callback for SM-x request to Lookup Service to perform component probe.
   void requestProbeCallback(const spa_msgs::SpaRequestLsProbe::ConstPtr &msg);
 
   /// Callback for component request to Lookup Service
@@ -44,6 +62,8 @@ private:
   SpaQueryServer queryServer;
   ros::ServiceClient probeClient;
   ros::ServiceClient xtedsReqClient;
+
+  std::unordered_map<std::string, RegisteredComponent> componentTable;
 
   // relate to xTEDS
   std::string xteds_repo_path; // = $HOME/.xteds_repo
@@ -60,9 +80,13 @@ LookupService::LookupService() :
   queryServer.start();
 }
 
-bool LookupService::existXteds(uuid_t xuuid)
+bool LookupService::existXteds(const std::string &xuuid)
 {
-  // to do
+  for (auto &xteds : xtedsRepository.xtedsList) // Search xTEDS repository
+  {
+    if (xteds->xuuid() == xuuid)
+      return true;
+  }
 	return false;
 }
 
@@ -79,10 +103,14 @@ void LookupService::requestProbeCallback(const spa_msgs::SpaRequestLsProbe::Cons
   }
 
   // Find if the component's xTEDS already exists in the repository.
-  uuid_t id;
-  id.deserialize(srv1.response.xuuid);
+  std::string id = srv1.response.xuuid;
   if (existXteds(id))
   {
+    // Update registered component info
+    RegisteredComponent cmpt;
+    cmpt.nodeName = msg->nodeName;
+    cmpt.status = 0;
+    componentTable[id] = cmpt;
     return;
   }
 
@@ -119,13 +147,161 @@ void LookupService::queryCallback(const spa_msgs::SpaQueryGoalConstPtr &goal)
 {
   spa_msgs::SpaQueryFeedback feedback;
   spa_msgs::SpaQueryResult result;
+
+  feedback.dialogId = goal->dialogId;
+  feedback.replyType = REGISTRATION;
   bool success = true;
+
+  Query query(goal->query);
+  XtedsNode *root = query.first_node();
+
+  for (auto &xteds : xtedsRepository.xtedsList)
+  {
+    for (XtedsNode *interface = xteds->first_node("Interface"); interface; interface = interface->next_sibling())
+    {
+      for (XtedsNode *msgType = interface->first_node(); msgType; msgType = msgType->next_sibling())
+      {
+        if (!matchMsgType(root, msgType))
+          continue;
+        XtedsNode *msg = msgType->first_node();
+        if (matchMessage(root, msg))
+        {
+          XtedsAttribute *msgId, *interfaceId;
+          if ((msgId = msg->first_attribute("id"))&&(interfaceId = interface->first_attribute("id")))
+          {
+            feedback.messageId = std::atoi("msgId");
+            feedback.interfaceId = std::atoi("interfaceId");
+          }
+          else
+          {
+            continue;
+          }
+          auto cmpt = componentTable.find(xteds->xuuid());
+          if (cmpt != componentTable.end()) // 找到组件信息
+          {
+            if (cmpt->second.status == 0) // 且组件未失效
+            {
+              feedback.nodeName = cmpt->second.nodeName;
+              queryServer.publishFeedback(feedback);
+            }
+          }
+        }
+      }
+    }
+  }
 
   if (success)
   {
     result.resultMode = 0;
     queryServer.setSucceeded(result);
   }
+}
+
+bool LookupService::matchMsgType(XtedsNode *root, XtedsNode *msgType)
+{
+  if (!(root && msgType)) // 节点为空
+    return false;
+
+  XtedsAttribute *attr;
+  if (attr = root->first_attribute("msgType"))
+    return false;
+  
+  if (std::strcmp(attr->value(), msgType->name()) != 0)
+    return false;
+}
+
+bool LookupService::matchMessage(XtedsNode *root, XtedsNode *msg)
+{
+  if (!(root && msg))
+    return false;
+  
+  // 逐个比较子节点
+  XtedsNode *varNode = root->first_node(), *var = msg->first_node();
+  for (; varNode && var; varNode = varNode->next_sibling(), var = var->next_sibling())
+  {
+    if (matchVariable(varNode, var))
+      continue;
+    else 
+      return false;
+  }
+  return true;
+}
+
+bool LookupService::matchVariable(XtedsNode *varNode, XtedsNode *var)
+{
+  if (!(varNode && var))
+    return false;
+
+  XtedsNode *attrNode = var->first_node();
+  // 遍历查询中的每个<Attribute>
+  for (; attrNode; attrNode = attrNode->next_sibling())
+  {
+    if (!matchAttribute(attrNode, var))
+      return false;
+  }
+
+  return true;
+}
+
+bool LookupService::matchAttribute(XtedsNode *attrNode, XtedsNode *var)
+{
+  if (!(attrNode && var))
+    return false;
+  
+  XtedsAttribute *attr;
+  char *name;
+  char *operand;
+  char *value1;
+  char *value2;
+
+  // Attribute name
+  if (!(attr = attrNode->first_attribute("name")))
+    return false;
+  name = attr->value();
+
+  // 搜索 var 中有无此属性
+  if (!(attr = var->first_attribute(name)))
+    return false;
+  // 有则访问其值
+  value2 = attr->value();
+
+  // Attribute operand
+  if (!(attr = attrNode->first_attribute("operand")))
+    return false;
+  operand = attr->value();
+
+  // Attribute value
+  if (!(attr = attrNode->first_attribute("value")))
+    return false;
+  value1 = attr->value();
+  
+  // 判断 value 是否是数值
+  double num1, num2;
+  if (std::sscanf(value1, "%lf", &num1)&&std::sscanf(value2, "%lf", &num2))
+  {
+    return numericCompare(num1, num2, operand);
+  }
+
+  // 是字符串
+  if (!std::strcmp(value1, value2))
+    return true;
+
+  return false;
+}
+
+bool LookupService::numericCompare(double num1, double num2, char *operand)
+{
+  if (std::strcmp(operand, "eq"))
+    return num1 == num2 ? true : false;
+  if (std::strcmp(operand, "lt"))
+    return num1 < num2 ? true : false;
+  if (std::strcmp(operand, "lte"))
+    return num1 <= num2 ? true : false;
+  if (std::strcmp(operand, "gte"))
+    return num1 >= num2 ? true : false;
+  if (std::strcmp(operand, "gt"))
+    return num1 > num2 ? true : false;
+  return false;
 }
 
 } // namespace spa

@@ -88,7 +88,7 @@ public:
 
     /// Gets xTEDS UUID.
     /// \return UUID of  xTEDS.
-    uuid_t xuuid() const {return m_xuuid;}
+    std::string xuuid() const {return m_xuuid;}
 
     /// Gets xTEDS name.
     /// \return Name of xTEDS.
@@ -113,7 +113,9 @@ private:
     /// \param data File data to set. Must be zero-terminatied.
     void setXuuid(const std::string &data)
     {
-        uuid_create_sha1_from_name(&m_xuuid, NameSpace_DNS, data.c_str(), data.size());
+        uuid_t temp;
+        uuid_create_sha1_from_name(&temp, NameSpace_DNS, data.c_str(), data.size());
+        m_xuuid = temp.toString();
     }
 
     /// Sets name of xTEDS by parsing its root node.
@@ -132,8 +134,34 @@ private:
 
     std::vector<char> m_data;
     std::string m_uri;
-    uuid_t m_xuuid;
+    std::string m_xuuid;
     std::string xteds_name; // xTEDS name
+};
+
+class Query : public rapidxml::xml_document<>
+{
+public:
+    Query(const std::string &file)
+    {
+        m_data.assign(file.begin(), file.end());
+        m_data.push_back('\0');
+
+        try
+        {
+            parse<0>(data());
+        }
+        catch (rapidxml::parse_error &exc)
+        {
+            throw std::runtime_error(std::string("cannot parse query: ") + exc.what());
+        }
+    }
+
+    char *data() {return &m_data.front();}
+
+    const char *data() const {return &m_data.front();}
+
+private:
+    std::vector<char> m_data;
 };
 
 }

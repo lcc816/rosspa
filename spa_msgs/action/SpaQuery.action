@@ -1,18 +1,17 @@
+string nodeName
 uint16 dialogId
-uint8 queryType
-uint8 reserved
-string query
+uint8 queryType         # Bit mask for the type of request
+string query            # Null terminated XML formatted query string
 ---
 uint8 resultMode
 ---
-uint64 providerCuuid
-uint64 providerXuuid
-string providerName
-uint64 dialogId
+string nodeName
+uint16 dialogId
 uint8 interfaceId
 uint8 messageId
-uint8 messageType
-uint8 replyType
-string variableIdList       # Null terminated, comma separated list of variable
-string messageDefinition    # Null terminated format string of the xTEDS message
-string xtedsSection         # Null terminated section of the xTEDS message definition from the xTEDS
+uint8 messageType       # Message type: Notification(0), Command(1), Request(2)
+uint8 replyType         # Indicates registration or cancellation
+string variableIdList   # Null terminated, comma separated list of variable
+string messageDefinition # Null terminated format string of the xTEDS message
+string xtedsSection     # Null terminated section of the xTEDS message definition 
+                        # from the xTEDS
