@@ -25,10 +25,12 @@ void SpaApplication::init()
   discoveryClient = nh.serviceClient<spa_msgs::Hello>("spa_sm_l/hello");
   beatServer = nh.advertiseService(nodeName + "/heartbeat", &SpaApplication::beatCallback, this);
   xtedsServer = nh.advertiseService(nodeName + "/xteds", &SpaApplication::xtedsRegisterCallback, this);
-  queryClient = std::make_shared<SpaQueryType>("spa_ls/spa_query", false);
+  queryClient = std::make_shared<SpaQueryClient>("spa_ls/spa_query", false);
 
   // create a thread to start spinning in the background
   spin_thread = std::thread(boost::bind(&SpaApplication::spinThreadCallback, this));
+  // waits for the ActionServer to connect to this client
+  queryClient->waitForServer();
 
   spa_msgs::Hello hello;
   hello.request.nodeName = nodeName;
@@ -104,7 +106,11 @@ void SpaApplication::registerNotification()
 
 }
 
-void SpaApplication::issueQuery(const std::string &query, const QueryType type)
+void SpaApplication::issueQuery(const std::string &query, 
+                                const QueryType type, 
+                                QueryDoneCallback done_cb, 
+                                QueryActiveCallback active_cb, 
+                                QueryFeedbackCallback feedback_cb)
 {
   spa_msgs::SpaQueryGoal goal;
   goal.nodeName = nodeName;
@@ -112,7 +118,7 @@ void SpaApplication::issueQuery(const std::string &query, const QueryType type)
   goal.queryType = type;
   goal.query = query;
   
-  queryClient->sendGoal(goal);
+  queryClient->sendGoal(goal, done_cb, active_cb, feedback_cb);
 }
 
 bool SpaApplication::xtedsRegisterCallback(spa_msgs::SpaXteds::Request &req, spa_msgs::SpaXteds::Response &res)

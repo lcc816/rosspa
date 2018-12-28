@@ -141,14 +141,20 @@ private:
 class Query : public rapidxml::xml_document<>
 {
 public:
+    Query() {}
     Query(const std::string &file)
+    {
+        parse(file);
+    }
+
+    void parse(const std::string &file)
     {
         m_data.assign(file.begin(), file.end());
         m_data.push_back('\0');
 
         try
         {
-            parse<0>(data());
+            xml_document<>::parse<0>(data());
         }
         catch (rapidxml::parse_error &exc)
         {

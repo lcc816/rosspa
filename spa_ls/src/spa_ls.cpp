@@ -82,9 +82,9 @@ LookupService::LookupService() :
 
 bool LookupService::existXteds(const std::string &xuuid)
 {
-  for (auto &xteds : xtedsRepository.xtedsList) // Search xTEDS repository
+  for (auto &xtedsDoc : xtedsRepository.xtedsList) // Search xTEDS repository
   {
-    if (xteds->xuuid() == xuuid)
+    if (xtedsDoc->xuuid() == xuuid)
       return true;
   }
 	return false;
@@ -104,6 +104,7 @@ void LookupService::requestProbeCallback(const spa_msgs::SpaRequestLsProbe::Cons
 
   // Find if the component's xTEDS already exists in the repository.
   std::string id = srv1.response.xuuid;
+  ROS_INFO("xuuid: %s", id.c_str());
   if (existXteds(id))
   {
     // Update registered component info
@@ -131,7 +132,7 @@ void LookupService::requestProbeCallback(const spa_msgs::SpaRequestLsProbe::Cons
   try // Unable to parse or fail to store
   {
     xteds = std::make_shared<Xteds>(srv2.response.xteds, uri.c_str());
-    ROS_INFO("saved xTEDS file to %s", uri.c_str());
+    ROS_INFO("saved as %s", uri.c_str());
   }
   catch (std::runtime_error &error)
   {
@@ -141,6 +142,8 @@ void LookupService::requestProbeCallback(const spa_msgs::SpaRequestLsProbe::Cons
 
   // index
   xtedsRepository.index(xteds);
+  // add to registered component table
+  componentTable[xteds->xuuid()] = {msg->nodeName, 0};
 }
 
 void LookupService::queryCallback(const spa_msgs::SpaQueryGoalConstPtr &goal)
@@ -151,13 +154,29 @@ void LookupService::queryCallback(const spa_msgs::SpaQueryGoalConstPtr &goal)
   feedback.dialogId = goal->dialogId;
   feedback.replyType = REGISTRATION;
   bool success = true;
-
-  Query query(goal->query);
-  XtedsNode *root = query.first_node();
-
-  for (auto &xteds : xtedsRepository.xtedsList)
+  Query query;
+  try 
   {
-    for (XtedsNode *interface = xteds->first_node("Interface"); interface; interface = interface->next_sibling())
+    query.parse(goal->query);
+  }
+  catch (std::runtime_error &error)
+  {
+    ROS_ERROR("%s", error.what());
+    result.resultMode = 1;
+    queryServer.setAborted(result); // abort
+    return;
+  }
+
+  XtedsNode *root = query.first_node();
+  // 遍历存储库中的 xTEDS
+  for (auto &xtedsDoc : xtedsRepository.xtedsList)
+  {
+    XtedsNode *xteds;
+    if (!(xteds = xtedsDoc->first_node())) // 根节点
+    {
+      continue;
+    }
+    for (XtedsNode *interface = xteds->first_node("Interface"); interface; interface = interface->next_sibling("Interface"))
     {
       for (XtedsNode *msgType = interface->first_node(); msgType; msgType = msgType->next_sibling())
       {
@@ -169,14 +188,14 @@ void LookupService::queryCallback(const spa_msgs::SpaQueryGoalConstPtr &goal)
           XtedsAttribute *msgId, *interfaceId;
           if ((msgId = msg->first_attribute("id"))&&(interfaceId = interface->first_attribute("id")))
           {
-            feedback.messageId = std::atoi("msgId");
-            feedback.interfaceId = std::atoi("interfaceId");
+            feedback.messageId = std::atoi(msgId->value());
+            feedback.interfaceId = std::atoi(interfaceId->value());
           }
           else
           {
             continue;
           }
-          auto cmpt = componentTable.find(xteds->xuuid());
+          auto cmpt = componentTable.find(xtedsDoc->xuuid());
           if (cmpt != componentTable.end()) // 找到组件信息
           {
             if (cmpt->second.status == 0) // 且组件未失效
@@ -203,11 +222,13 @@ bool LookupService::matchMsgType(XtedsNode *root, XtedsNode *msgType)
     return false;
 
   XtedsAttribute *attr;
-  if (attr = root->first_attribute("msgType"))
+  if (!(attr = root->first_attribute("msgType")))
     return false;
   
   if (std::strcmp(attr->value(), msgType->name()) != 0)
     return false;
+
+  return true;
 }
 
 bool LookupService::matchMessage(XtedsNode *root, XtedsNode *msg)
@@ -232,7 +253,7 @@ bool LookupService::matchVariable(XtedsNode *varNode, XtedsNode *var)
   if (!(varNode && var))
     return false;
 
-  XtedsNode *attrNode = var->first_node();
+  XtedsNode *attrNode = varNode->first_node();
   // 遍历查询中的每个<Attribute>
   for (; attrNode; attrNode = attrNode->next_sibling())
   {

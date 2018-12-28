@@ -14,6 +14,24 @@ public:
   void appInit();
   void run();
   void appShutdown() {}
+
+private:
+  void queryDoneCb( const actionlib::SimpleClientGoalState &state, 
+                    const spa_msgs::SpaQueryResultConstPtr &result) 
+  {
+    ROS_INFO("query done!");
+  }
+
+  void queryActiveCb() {}
+
+  void queryFeedbackCb(const spa_msgs::SpaQueryFeedbackConstPtr &feedback)
+  {
+    providerName = feedback->nodeName;
+    ROS_INFO("found matching nodes: %s", providerName.c_str());
+  }
+
+  // data provider
+  std::string providerName;
 };
 
 void MyApplication::appInit()
@@ -29,12 +47,18 @@ void MyApplication::run()
   std::string query(
     "<SpaQuery msgType=\"Notification\">\n"
     " <Variable>\n"
-    "   <Attribute name=\"kind\" operand=\"eq\" value=\"Temperature\">\n"
-    "   <Attribute name=\"units\" operand=\"eq\" value=\"degC\">\n"
+    "   <Attribute name=\"kind\" operand=\"eq\" value=\"Temperature\"/>\n"
+    "   <Attribute name=\"units\" operand=\"eq\" value=\"degC\"/>\n"
+    "   <Attribute name=\"dataType\" operand=\"eq\" value=\"FLOAT32\"/>\n"
     " </Variable>\n"
     "</SpaQuery>"
   );
-  issueQuery(query, SPA_REQREG_CURRENT);
+  ROS_INFO("publish query...");
+  issueQuery(query, SPA_REQREG_CURRENT, 
+    boost::bind(&MyApplication::queryDoneCb, this, _1, _2),
+    boost::bind(&MyApplication::queryActiveCb, this),
+    boost::bind(&MyApplication::queryFeedbackCb, this, _1));
+  waitForQueryResult(); // 等待查询结果返回
   while (ros::ok())
   {
     ROS_INFO("I'm running!");
@@ -48,7 +72,7 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "example_node");
 
-  std::string cuuid("00112233445566778899aabbccddee"); // length = 32
+  std::string cuuid("00112233445566778899aabbccddeeff"); // length = 32
   std::string uri(ros::package::getPath("example_component") + "/xteds/Thermometer_Demo.xml");
   spa::MyApplication myApp(cuuid, spa::SPA_CMPTYPE_UNKNOWN, uri);
   myApp.run();

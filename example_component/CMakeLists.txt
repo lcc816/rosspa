@@ -7,6 +7,8 @@ add_compile_options(-std=c++11)
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS spa_core roslib)
 
+find_package(Boost REQUIRED COMPONENTS system)
+
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES subpose

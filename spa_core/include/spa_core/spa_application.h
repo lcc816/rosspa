@@ -30,7 +30,17 @@ public:
   void registerRequest();
   void registerCommand();
   void registerNotification();
-  void issueQuery(const std::string &query, const QueryType type);
+
+  typedef actionlib::SimpleActionClient<spa_msgs::SpaQueryAction> SpaQueryClient;
+  typedef SpaQueryClient::SimpleDoneCallback QueryDoneCallback;
+  typedef SpaQueryClient::SimpleActiveCallback QueryActiveCallback;
+  typedef SpaQueryClient::SimpleFeedbackCallback QueryFeedbackCallback;
+  void issueQuery(const std::string &query, 
+                  const QueryType type, 
+                  QueryDoneCallback done_cb, 
+                  QueryActiveCallback active_cb, 
+                  QueryFeedbackCallback feedback_cb);
+  void waitForQueryResult() {queryClient->waitForResult();}
 
 private:
   ///< Response to LS for the XTEDS file.
@@ -53,8 +63,7 @@ private:
   ros::ServiceClient discoveryClient;
   ros::ServiceServer beatServer;
   ros::ServiceServer xtedsServer;
-  typedef actionlib::SimpleActionClient<spa_msgs::SpaQueryAction> SpaQueryType;
-  std::shared_ptr<SpaQueryType> queryClient;
+  std::shared_ptr<SpaQueryClient> queryClient;
   std::thread spin_thread;
 };
 
