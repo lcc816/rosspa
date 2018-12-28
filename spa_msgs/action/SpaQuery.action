@@ -7,8 +7,8 @@ uint8 resultMode
 ---
 string nodeName
 uint16 dialogId
-uint8 interfaceId
-uint8 messageId
+string interfaceName
+string messageName
 uint8 messageType       # Message type: Notification(0), Command(1), Request(2)
 uint8 replyType         # Indicates registration or cancellation
 string variableIdList   # Null terminated, comma separated list of variable

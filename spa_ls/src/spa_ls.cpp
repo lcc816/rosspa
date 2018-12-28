@@ -185,11 +185,11 @@ void LookupService::queryCallback(const spa_msgs::SpaQueryGoalConstPtr &goal)
         XtedsNode *msg = msgType->first_node();
         if (matchMessage(root, msg))
         {
-          XtedsAttribute *msgId, *interfaceId;
-          if ((msgId = msg->first_attribute("id"))&&(interfaceId = interface->first_attribute("id")))
+          XtedsAttribute *msgName, *interfaceName;
+          if ((msgName = msg->first_attribute("name"))&&(interfaceName = interface->first_attribute("name")))
           {
-            feedback.messageId = std::atoi(msgId->value());
-            feedback.interfaceId = std::atoi(interfaceId->value());
+            feedback.messageName = std::string(msgName->value());
+            feedback.interfaceName = std::string(interfaceName->value());
           }
           else
           {
