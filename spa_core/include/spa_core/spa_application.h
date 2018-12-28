@@ -42,7 +42,7 @@ public:
                   QueryFeedbackCallback feedback_cb);
   void waitForQueryResult() {queryClient->waitForResult();}
 
-private:
+protected:
   ///< Response to LS for the XTEDS file.
   bool xtedsRegisterCallback(spa_msgs::SpaXteds::Request &req, spa_msgs::SpaXteds::Response &res);
   ///< for heartbeat probe from the SM-L

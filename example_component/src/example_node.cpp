@@ -1,5 +1,6 @@
 #include <spa_core/spa_application.h>
 #include <ros/package.h>
+#include <spa_msgs/SpaData.h>
 
 namespace spa
 {
@@ -9,13 +10,18 @@ class MyApplication : public SpaApplication
 public:
   MyApplication(const std::string &id, ComponentType type, const std::string &uri) :
     SpaApplication(id, type, uri)
-  {}
+  {
+    providerName.clear();
+    topicName.clear();
+  }
   ~MyApplication() {}
   void appInit();
   void run();
   void appShutdown() {}
 
 private:
+  void showDataCb(const spa_msgs::SpaData &msg);
+
   void queryDoneCb( const actionlib::SimpleClientGoalState &state, 
                     const spa_msgs::SpaQueryResultConstPtr &result) 
   {
@@ -28,10 +34,14 @@ private:
   {
     providerName = feedback->nodeName;
     ROS_INFO("found matching nodes: %s", providerName.c_str());
+    topicName = providerName + '/' + feedback->interfaceName + '/' + feedback->messageName;
   }
 
+  ros::Subscriber sub;
   // data provider
   std::string providerName;
+  // message topic
+  std::string topicName;
 };
 
 void MyApplication::appInit()
@@ -41,7 +51,7 @@ void MyApplication::appInit()
 
 void MyApplication::run()
 {
-  init();
+  init(); // 自动处理发现和注册过程
 
   ros::Rate rate(0.2);
   std::string query(
@@ -59,10 +69,24 @@ void MyApplication::run()
     boost::bind(&MyApplication::queryActiveCb, this),
     boost::bind(&MyApplication::queryFeedbackCb, this, _1));
   waitForQueryResult(); // 等待查询结果返回
+  if (!topicName.empty())
+  {
+    ROS_INFO("subscribe to %s", topicName.c_str());
+    sub = nh.subscribe(topicName, 10, &MyApplication::showDataCb, this);
+  }
   while (ros::ok())
   {
-    ROS_INFO("I'm running!");
     rate.sleep();
+  }
+}
+
+void MyApplication::showDataCb(const spa_msgs::SpaData &msg)
+{
+  if (msg.payloadLength == 4)
+  {
+    float temp;
+    memcpy(&temp, &msg.payload.front(), 4);
+    ROS_INFO("current temperature is %f", temp);
   }
 }
 
