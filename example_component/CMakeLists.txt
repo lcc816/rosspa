@@ -20,16 +20,19 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_executable(example_node src/example_node.cpp)
-target_link_libraries(example_node ${catkin_LIBRARIES})
+add_executable(temperature_display src/temperature_display.cpp)
+target_link_libraries(temperature_display ${catkin_LIBRARIES})
 
-install(TARGETS example_node
+add_executable(flywheel_control src/temperature_display.cpp)
+target_link_libraries(flywheel_control ${catkin_LIBRARIES})
+
+install(TARGETS temperature_display flywheel_control
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 # install the xteds file
-install(FILES xteds/Thermometer_Demo.xml
+install(FILES xteds/*.xml
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/xteds
 )

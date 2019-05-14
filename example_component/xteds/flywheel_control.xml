@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xTEDS name="reaction_wheel_xteds" xmlns:xt=https://github.com/lcc816/rosspa xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://github.com/lcc816/rosspa https://raw.githubusercontent.com/lcc816/rosspa/master/example_component/xteds_schema.xsd">
+  <Device name="reaction_wheel" kind="ReactionWheel"/>
+  <Interface name="command_interface" id="1">
+    <Command>
+      <CommandMsg name="set_motors" id="1">
+        <Variable name="speedX" kind="WheelSpeed" dataType="INT32" units="rot/s"/>
+        <Variable name="speedY" kind="WheelSpeed" dataType="INT32" units="rot/s"/>
+        <Variable name="speedZ" kind="WheelSpeed" dataType="INT32" units="rot/s"/>
+      </CommandMsg>
+    </Command>
+  </Interface>
+</xTEDS>

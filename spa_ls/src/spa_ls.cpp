@@ -150,10 +150,10 @@ void LookupService::queryCallback(const spa_msgs::SpaQueryGoalConstPtr &goal)
 {
   spa_msgs::SpaQueryFeedback feedback;
   spa_msgs::SpaQueryResult result;
+  result.resultMode = 1;
 
   feedback.dialogId = goal->dialogId;
   feedback.replyType = REGISTRATION;
-  bool success = true;
   Query query;
   try 
   {
@@ -202,6 +202,8 @@ void LookupService::queryCallback(const spa_msgs::SpaQueryGoalConstPtr &goal)
             {
               feedback.nodeName = cmpt->second.nodeName;
               queryServer.publishFeedback(feedback);
+              result.resultMode = 0;
+              queryServer.setSucceeded(result);
             }
           }
         }
@@ -209,11 +211,7 @@ void LookupService::queryCallback(const spa_msgs::SpaQueryGoalConstPtr &goal)
     }
   }
 
-  if (success)
-  {
-    result.resultMode = 0;
-    queryServer.setSucceeded(result);
-  }
+  queryServer.setSucceeded(result);
 }
 
 bool LookupService::matchMsgType(XtedsNode *root, XtedsNode *msgType)
